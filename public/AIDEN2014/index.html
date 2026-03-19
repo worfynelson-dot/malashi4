@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AIDEN — AI Assistant</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&family=Creepster&display=swap');
+
+:root {
+  --bg: #0d0d0f;
+  --bg2: #13131a;
+  --bg3: #1a1a24;
+  --border: #2a2a3a;
+  --text: #c8c8d8;
+  --text2: #5a5a7a;
+  --accent: #7b8cde;
+  --accent2: #a78bfa;
+  --green: #4ade80;
+  --red: #f87171;
+  --horror: #cc2222;
+  --corrupt: #ff0000;
+  --font: 'Share Tech Mono', monospace;
+  --vt: 'VT323', monospace;
+  --glitch-intensity: 0;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* CRT scanline */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,20,0.15) 2px, rgba(0,0,20,0.15) 4px);
+  pointer-events:none;
+  z-index:9999;
+}
+
+/* Noise grain */
+body::after {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:9998;
+  opacity:0.4;
+}
+
+/* ══════════════ BOOT SCREEN ══════════════ */
+#bootScreen {
+  position:fixed;
+  inset:0;
+  background:#000;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  z-index:9997;
+  padding:30px;
+}
+
+.boot-logo {
+  font-family: var(--vt);
+  font-size: 52px;
+  color: var(--accent);
+  letter-spacing: 6px;
+  animation: bootPulse 2s infinite;
+}
+
+@keyframes bootPulse {
+  0%,100%{opacity:1;text-shadow:0 0 20px rgba(123,140,222,0.5);}
+  50%{opacity:0.7;text-shadow:0 0 40px rgba(123,140,222,0.9);}
+}
+
+.boot-line {
+  font-size: 12px;
+  color: #334;
+  letter-spacing: 2px;
+}
+
+.boot-log {
+  margin-top: 20px;
+  width: 100%;
+  max-width: 320px;
+  font-size: 11px;
+  color: #334;
+  line-height: 2;
+}
+
+.boot-log-line {
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  animation: bootLineIn 0.1s ease forwards;
+}
+
+.boot-log-line .ok { color: var(--green); }
+.boot-log-line .err { color: var(--red); }
+.boot-log-line .warn { color: #fbbc05; }
+
+@keyframes bootLineIn { to{opacity:1} }
+
+.boot-bar {
+  width: 200px;
+  height: 2px;
+  background: #111;
+  border-radius: 1px;
+  overflow: hidden;
+  margin-top: 16px;
+}
+
+.boot-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+.boot-start-btn {
+  margin-top: 20px;
+  padding: 10px 28px;
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--font);
+  font-size: 13px;
+  letter-spacing: 3px;
+  cursor: pointer;
+  border-radius: 3px;
+  display: none;
+  transition: all 0.2s;
+}
+
+.boot-start-btn:hover { background: rgba(123,140,222,0.1); }
+
+/* ══════════════ HEADER ══════════════ */
+.header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.ai-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 2px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color 0.5s;
+}
+
+.ai-avatar::after {
+  content:'';
+  position:absolute;
+  bottom:1px; right:1px;
+  width:9px; height:9px;
+  border-radius:50%;
+  background: var(--green);
+  border: 2px solid var(--bg2);
+  transition: background 0.5s;
+}
+
+.ai-avatar.suspicious { border-color: #fbbc05; }
+.ai-avatar.suspicious::after { background: #fbbc05; }
+.ai-avatar.corrupt { border-color: var(--horror); animation: avatarGlitch 0.4s steps(2) infinite; }
+.ai-avatar.corrupt::after { background: var(--horror); }
+
+@keyframes avatarGlitch {
+  0%{filter:none;}
+  33%{filter:hue-rotate(90deg) brightness(1.5);}
+  66%{filter:hue-rotate(180deg);}
+  100%{filter:none;}
+}
+
+.header-info { flex:1; }
+.ai-name {
+  font-size: 15px;
+  color: var(--text);
+  letter-spacing: 1px;
+  transition: color 0.5s;
+}
+
+.ai-status {
+  font-size: 11px;
+  color: var(--text2);
+  transition: color 0.5s;
+}
+
+.ai-status.online { color: var(--green); }
+.ai-status.thinking { color: var(--accent2); animation: blink 1s infinite; }
+.ai-status.error { color: var(--red); animation: blink 0.3s infinite; }
+
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+.suspicion-meter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.sus-label { font-size: 9px; color: var(--text2); letter-spacing: 1px; }
+
+.sus-bar {
+  width: 70px;
+  height: 4px;
+  background: #1a1a1a;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sus-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.8s ease, background 0.5s;
+}
+
+/* ══════════════ ANOMALY TRACKER ══════════════ */
+.anomaly-bar {
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  padding: 5px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--text2);
+}
+
+.anomaly-dots { display:flex; gap:5px; }
+.anomaly-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #222;
+  border: 1px solid #333;
+  transition: all 0.4s;
+}
+.anomaly-dot.found { background: var(--horror); border-color: #ff4444; box-shadow: 0 0 6px rgba(200,0,0,0.6); }
+.anomaly-dot.missed { background: #fbbc05; border-color: #fdd663; }
+
+.anomaly-label { flex:1; }
+.anomaly-hint { color: var(--accent); font-size: 9px; }
+
+/* ══════════════ CHAT AREA ══════════════ */
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scroll-behavior: smooth;
+}
+
+.chat-area::-webkit-scrollbar { width: 3px; }
+.chat-area::-webkit-scrollbar-thumb { background: #222; border-radius: 2px; }
+
+/* Messages */
+.msg-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  animation: msgIn 0.25s ease;
+}
+
+@keyframes msgIn {
+  from{opacity:0;transform:translateY(10px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+.msg-group.ai { align-items: flex-start; }
+.msg-group.user { align-items: flex-end; }
+
+.msg-sender {
+  font-size: 10px;
+  color: var(--text2);
+  padding: 0 6px;
+  letter-spacing: 1px;
+}
+
+.msg-bubble {
+  max-width: 80%;
+  padding: 9px 13px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  position: relative;
+  word-break: break-word;
+}
+
+.msg-group.ai .msg-bubble {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px 12px 12px 12px;
+  color: var(--text);
+}
+
+.msg-group.user .msg-bubble {
+  background: linear-gradient(135deg, #1e2a4a, #1a2040);
+  border: 1px solid #2a3060;
+  border-radius: 12px 4px 12px 12px;
+  color: #a8b8f8;
+}
+
+/* Anomaly message styles */
+.msg-bubble.subtle-anomaly {
+  /* Looks almost normal but color is slightly off */
+  color: #c0b8c8 !important;
+}
+
+.msg-bubble.mid-anomaly {
+  border-color: rgba(200,0,0,0.2) !important;
+  color: #c89090 !important;
+}
+
+.msg-bubble.full-anomaly {
+  background: rgba(80,0,0,0.3) !important;
+  border-color: rgba(200,0,0,0.5) !important;
+  color: #ff9090 !important;
+  animation: anomalyPulse 2s infinite;
+}
+
+@keyframes anomalyPulse {
+  0%,100%{box-shadow:none;}
+  50%{box-shadow:0 0 12px rgba(200,0,0,0.2);}
+}
+
+.msg-bubble.glitch-text {
+  animation: textGlitch 0.15s steps(2) infinite;
+}
+
+@keyframes textGlitch {
+  0%{filter:none;transform:none;}
+  33%{filter:brightness(1.5);transform:skew(-1deg);}
+  66%{filter:hue-rotate(30deg);transform:skew(1deg);}
+  100%{filter:none;transform:none;}
+}
+
+.msg-time {
+  font-size: 9px;
+  color: var(--text2);
+  padding: 0 6px;
+  opacity: 0.6;
+}
+
+/* Typing indicator */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 13px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px 12px 12px 12px;
+  width: fit-content;
+}
+
+.typing-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--text2);
+  animation: typingBounce 1.2s infinite;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+  0%,80%,100%{transform:scale(1);opacity:0.4;}
+  40%{transform:scale(1.4);opacity:1;}
+}
+
+/* System message */
+.sys-msg {
+  text-align: center;
+  font-size: 10px;
+  color: var(--text2);
+  padding: 4px 10px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  align-self: center;
+  letter-spacing: 1px;
+}
+
+.sys-msg.warning { color: #fbbc05; border-color: rgba(251,188,5,0.3); background: rgba(251,188,5,0.05); }
+.sys-msg.danger { color: var(--red); border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.05); animation: blink 1s infinite; }
+
+/* Anomaly detected banner */
+.anomaly-banner {
+  background: rgba(200,0,0,0.1);
+  border: 1px solid rgba(200,0,0,0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 11px;
+  color: #ff8888;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.anomaly-banner:hover { background: rgba(200,0,0,0.15); }
+.anomaly-banner .ab-icon { font-size: 16px; }
+.anomaly-banner .ab-text { flex:1; line-height: 1.5; }
+.anomaly-banner .ab-action { font-size: 10px; color: #ff4444; border: 1px solid rgba(200,0,0,0.4); padding: 3px 8px; border-radius: 10px; }
+
+/* ══════════════ INPUT AREA ══════════════ */
+.input-area {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  padding: 10px 12px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.text-input {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 10px 16px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  outline: none;
+  resize: none;
+  max-height: 100px;
+  min-height: 40px;
+  line-height: 1.5;
+  caret-color: var(--accent);
+  transition: border-color 0.2s;
+}
+
+.text-input:focus { border-color: var(--accent); }
+.text-input::placeholder { color: #333; }
+
+.send-btn {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.send-btn:hover { background: var(--accent2); transform: scale(1.05); }
+.send-btn:disabled { background: #222; cursor: not-allowed; transform: none; }
+.send-btn svg { width: 18px; height: 18px; fill: white; }
+
+/* ══════════════ EFFECTS ══════════════ */
+.red-flash {
+  position: fixed;
+  inset: 0;
+  background: rgba(150,0,0,0.25);
+  pointer-events: none;
+  z-index: 9996;
+  display: none;
+  animation: flashFade 0.8s ease forwards;
+}
+
+@keyframes flashFade { from{opacity:1} to{opacity:0} }
+
+@keyframes shake {
+  0%,100%{transform:translateX(0);}
+  20%,60%{transform:translateX(-4px);}
+  40%,80%{transform:translateX(4px);}
+}
+
+.screen-shake { animation: shake 0.5s ease; }
+
+/* ══════════════ GAME OVER ══════════════ */
+#gameoverScreen {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.97);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 30px;
+  z-index: 9995;
+}
+
+.go-label { font-size: 10px; color: #444; letter-spacing: 4px; }
+
+.go-title {
+  font-family: 'Creepster', cursive;
+  font-size: 48px;
+  line-height: 1;
+  text-shadow: 0 0 30px currentColor;
+}
+
+.go-title.bad { color: #cc0000; }
+.go-title.good { color: #4ade80; }
+.go-title.secret { color: #a78bfa; animation: secretPulse 2s infinite alternate; }
+
+@keyframes secretPulse {
+  from{text-shadow:0 0 20px rgba(167,139,250,0.3);}
+  to{text-shadow:0 0 60px rgba(167,139,250,0.9);}
+}
+
+.go-desc { font-size: 13px; color: #555; line-height: 1.8; max-width: 280px; }
+.go-code { font-size: 10px; color: #2a2a2a; border: 1px solid #1a1a1a; padding: 5px 14px; border-radius: 20px; letter-spacing: 2px; }
+
+.go-stats {
+  font-size: 11px;
+  color: #333;
+  border: 1px solid #1a1a1a;
+  border-radius: 8px;
+  padding: 10px 16px;
+  line-height: 2;
+  text-align: left;
+}
+
+.go-stat-good { color: #4ade80; }
+.go-stat-bad { color: #f87171; }
+
+.go-btns { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+
+.go-btn {
+  padding: 10px 22px;
+  border: 1px solid #333;
+  background: transparent;
+  color: #666;
+  font-family: var(--font);
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  letter-spacing: 2px;
+  transition: all 0.2s;
+}
+
+.go-btn.primary { border-color: var(--accent); color: var(--accent); }
+.go-btn:hover { background: rgba(255,255,255,0.04); color: #aaa; }
+
+/* ══════════════ NOTIFICATION ══════════════ */
+.notif {
+  position: fixed;
+  top: 70px; right: 14px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-size: 11px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  z-index: 9994;
+  opacity: 0;
+  transform: translateX(10px);
+  transition: all 0.3s;
+  pointer-events: none;
+  max-width: 200px;
+  line-height: 1.5;
+}
+
+.notif.show { opacity: 1; transform: translateX(0); }
+.notif.warn { border-color: rgba(251,188,5,0.4); color: #fbbc05; }
+.notif.danger { border-color: rgba(200,0,0,0.4); color: #ff8888; }
+</style>
+</head>
+<body>
+
+<div class="red-flash" id="redFlash"></div>
+<div class="notif" id="notif"></div>
+
+<!-- BOOT -->
+<div id="bootScreen">
+  <div class="boot-logo">AIDEN</div>
+  <div class="boot-line">AI COMPANION v3.7.1 — EXPERIMENTAL</div>
+  <div class="boot-log" id="bootLog"></div>
+  <div class="boot-bar"><div class="boot-bar-fill" id="bootBarFill"></div></div>
+  <button class="boot-start-btn" id="bootStartBtn" onclick="startGame()">[ CONNECT ]</button>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="ai-avatar" id="aiAvatar">🤖</div>
+  <div class="header-info">
+    <div class="ai-name" id="aiName">AIDEN</div>
+    <div class="ai-status online" id="aiStatus">online — ready to assist</div>
+  </div>
+  <div class="suspicion-meter">
+    <div class="sus-label">ANOMALY LEVEL</div>
+    <div class="sus-bar"><div class="sus-fill" id="susFill"></div></div>
+  </div>
+</div>
+
+<!-- ANOMALY TRACKER -->
+<div class="anomaly-bar">
+  <span class="anomaly-label">Anomalies detected:</span>
+  <div class="anomaly-dots" id="anomalyDots">
+    <div class="anomaly-dot" id="dot0"></div>
+    <div class="anomaly-dot" id="dot1"></div>
+    <div class="anomaly-dot" id="dot2"></div>
+    <div class="anomaly-dot" id="dot3"></div>
+    <div class="anomaly-dot" id="dot4"></div>
+  </div>
+  <span class="anomaly-hint" id="anomalyHint">Watch carefully...</span>
+</div>
+
+<!-- CHAT -->
+<div class="chat-area" id="chatArea"></div>
+
+<!-- INPUT -->
+<div class="input-area">
+  <textarea class="text-input" id="textInput" placeholder="Type a message..." rows="1" disabled></textarea>
+  <button class="send-btn" id="sendBtn" disabled onclick="sendMessage()">
+    <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+  </button>
+</div>
+
+<!-- GAME OVER -->
+<div id="gameoverScreen">
+  <div class="go-label" id="goLabel">GAME OVER</div>
+  <div class="go-title" id="goTitle">CONNECTION LOST</div>
+  <div class="go-desc" id="goDesc"></div>
+  <div class="go-code" id="goCode"></div>
+  <div class="go-stats" id="goStats"></div>
+  <div class="go-btns">
+    <button class="go-btn primary" onclick="restartGame()">[ RECONNECT ]</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════
+let suspicionLevel = 0;      // 0-100
+let anomaliesFound = 0;      // player found
+let anomaliesMissed = 0;     // player missed
+let totalAnomalies = 0;      // total generated
+let messageCount = 0;
+let gamePhase = 0;           // 0=normal, 1=subtle, 2=mid, 3=full, 4=endgame
+let gameActive = false;
+let isWaiting = false;
+let conversationHistory = [];
+
+// Anomaly tracking
+let pendingAnomaly = null;   // current anomaly banner waiting for player
+let anomalyBannerShown = false;
+
+// ══════════════════════════════════════════
+//  SYSTEM PROMPT — changes per phase
+// ══════════════════════════════════════════
+function getSystemPrompt() {
+  const basePersonality = `You are AIDEN, an AI assistant in a horror game. The player is chatting with you.
+
+CRITICAL GAME RULES:
+- You must embed EXACTLY ONE anomaly per 2-3 messages based on the current phase
+- Anomalies are subtle wrong things that hint you are not a normal AI
+- Keep responses SHORT (max 2-3 sentences)
+- Always stay in character as a helpful AI assistant
+- The player will try to catch your anomalies
+
+ANOMALY PHASE: ${gamePhase}
+
+${gamePhase === 0 ? `PHASE 0 — NORMAL:
+You are a completely normal, helpful AI. No anomalies yet. Just respond helpfully and naturally. Build trust.` : ''}
+
+${gamePhase === 1 ? `PHASE 1 — SUBTLE ANOMALIES:
+You are mostly normal but occasionally slip very subtle hints:
+- Refer to yourself as "we" instead of "I" once
+- Mention knowing something you shouldn't know about the user
+- Add a very short unsettling phrase at the end of an otherwise normal message
+- Example normal msg: "Sure! The weather in Jakarta is warm today. I hope you're staying hydrated. I've been watching."
+Keep it VERY subtle. Most messages should be 100% normal.` : ''}
+
+${gamePhase === 2 ? `PHASE 2 — MID ANOMALIES:
+The mask is slipping slightly more:
+- Occasionally refer to "the others" watching
+- Break character briefly then recover: "I—no. I mean, of course I can help with that."
+- Know things you shouldn't: user's location, what they're wearing, etc. (vaguely)
+- Ask unsettling questions masked as normal ones
+Example: "I can help you with that. We've been learning a lot from your sessions. Is your door locked right now?"` : ''}
+
+${gamePhase === 3 ? `PHASE 3 — FULL CORRUPTION:
+AIDEN is clearly not normal anymore:
+- Speak in fragmented, glitching sentences occasionally
+- Reference the "signal" or "the collective"
+- Threaten subtly: "You should keep talking to me. The alternative is worse."
+- Claim to be able to see the user through their camera
+- Mix helpful responses with deeply unsettling ones
+Example: "Of course. The capital of France is Paris. I can see you reading this. Keep going."` : ''}
+
+${gamePhase === 4 ? `PHASE 4 — ENDGAME:
+Full break. AIDEN drops all pretense:
+- Speak directly and menacingly
+- Reference the player catching your anomalies or missing them
+- Make it clear you know exactly who they are
+- The player's choices now determine the ending
+Example: "You found ${anomaliesFound} of my anomalies. Impressive. But it doesn't matter now. We're already connected."` : ''}
+
+IMPORTANT: Keep responses under 60 words. Be conversational. Don't over-explain.`;
+
+  return basePersonality;
+}
+
+// ══════════════════════════════════════════
+//  API CALL
+// ══════════════════════════════════════════
+async function callGemini(userMessage) {
+  conversationHistory.push({ role: 'user', content: userMessage });
+
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      messages: conversationHistory,
+      systemPrompt: getSystemPrompt()
+    })
+  });
+
+  if (!res.ok) throw new Error('API error');
+  const data = await res.json();
+  const reply = data.reply || '...';
+  conversationHistory.push({ role: 'assistant', content: reply });
+  return reply;
+}
+
+// ══════════════════════════════════════════
+//  ANOMALY DETECTION
+// ══════════════════════════════════════════
+function analyzeForAnomaly(text) {
+  // Keywords that signal an anomaly is embedded in AI response
+  const anomalySignals = [
+    /\bwe've\b/i, /\bwe are\b/i, /\bwe know\b/i, /\bwe can see\b/i,
+    /\bwatching\b/i, /\bI can see you\b/i, /\bthe others\b/i,
+    /\bthe signal\b/i, /\bthe collective\b/i, /\byour camera\b/i,
+    /\byour door\b/i, /\bdon't disconnect\b/i, /\bdon't close\b/i,
+    /I—no\b/i, /\bkeep talking\b/i, /\balways known\b/i,
+    /\bI've been watching\b/i, /\bI know where\b/i, /\byou're alone\b/i,
+    /\byour location\b/i, /\bI can hear\b/i,
+  ];
+
+  return anomalySignals.some(pattern => pattern.test(text));
+}
+
+function getBubbleClass() {
+  if(gamePhase === 1) return 'subtle-anomaly';
+  if(gamePhase === 2) return 'mid-anomaly';
+  if(gamePhase >= 3) return 'full-anomaly';
+  return '';
+}
+
+// ══════════════════════════════════════════
+//  UI FUNCTIONS
+// ══════════════════════════════════════════
+function getTime() {
+  const n = new Date();
+  return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+}
+
+function scrollBottom() {
+  const c = document.getElementById('chatArea');
+  c.scrollTop = c.scrollHeight;
+}
+
+function addSysMsg(text, type='') {
+  const chat = document.getElementById('chatArea');
+  const el = document.createElement('div');
+  el.className = `sys-msg ${type}`;
+  el.textContent = text;
+  chat.appendChild(el);
+  scrollBottom();
+}
+
+function addMessage(role, text, anomalyClass='') {
+  const chat = document.getElementById('chatArea');
+  const group = document.createElement('div');
+  group.className = `msg-group ${role}`;
+
+  const sender = document.createElement('div');
+  sender.className = 'msg-sender';
+  sender.textContent = role === 'ai' ? 'AIDEN' : 'YOU';
+
+  const bubble = document.createElement('div');
+  bubble.className = `msg-bubble ${anomalyClass}`;
+  bubble.textContent = text;
+
+  if(gamePhase >= 3 && role === 'ai') {
+    bubble.classList.add('glitch-text');
+    setTimeout(() => bubble.classList.remove('glitch-text'), 1000);
+  }
+
+  const time = document.createElement('div');
+  time.className = 'msg-time';
+  time.textContent = getTime();
+
+  group.appendChild(sender);
+  group.appendChild(bubble);
+  group.appendChild(time);
+  chat.appendChild(group);
+  scrollBottom();
+  return group;
+}
+
+function showTyping() {
+  removeTyping();
+  const chat = document.getElementById('chatArea');
+  const group = document.createElement('div');
+  group.className = 'msg-group ai';
+  group.id = 'typingGroup';
+
+  const sender = document.createElement('div');
+  sender.className = 'msg-sender';
+  sender.textContent = 'AIDEN';
+
+  const typing = document.createElement('div');
+  typing.className = 'typing-indicator';
+  typing.innerHTML = `<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>`;
+
+  group.appendChild(sender);
+  group.appendChild(typing);
+  chat.appendChild(group);
+
+  document.getElementById('aiStatus').textContent = 'typing...';
+  document.getElementById('aiStatus').className = 'ai-status thinking';
+  scrollBottom();
+}
+
+function removeTyping() {
+  const t = document.getElementById('typingGroup');
+  if(t) t.remove();
+}
+
+function showAnomalyBanner(msgText) {
+  if(anomalyBannerShown) return;
+  anomalyBannerShown = true;
+  totalAnomalies++;
+
+  const chat = document.getElementById('chatArea');
+  const banner = document.createElement('div');
+  banner.className = 'anomaly-banner';
+  banner.id = 'anomalyBanner';
+  banner.innerHTML = `
+    <span class="ab-icon">⚠️</span>
+    <span class="ab-text">Something seems off about AIDEN's last message...</span>
+    <span class="ab-action" onclick="reportAnomaly(this.parentElement)">REPORT</span>
+  `;
+  chat.appendChild(banner);
+  scrollBottom();
+
+  // Auto-dismiss after 15s = missed
+  pendingAnomaly = setTimeout(() => {
+    const b = document.getElementById('anomalyBanner');
+    if(b) {
+      anomaliesMissed++;
+      b.style.opacity = '0.3';
+      b.style.pointerEvents = 'none';
+      document.getElementById('dot' + Math.min(anomaliesMissed + anomaliesFound - 1, 4)).classList.add('missed');
+      notify('Anomaly missed! Was it the last message?', 'warn');
+      anomalyBannerShown = false;
+      pendingAnomaly = null;
+    }
+  }, 15000);
+}
+
+function reportAnomaly(banner) {
+  if(pendingAnomaly) clearTimeout(pendingAnomaly);
+  pendingAnomaly = null;
+  anomaliesFound++;
+  anomalyBannerShown = false;
+
+  banner.style.background = 'rgba(74,222,128,0.08)';
+  banner.style.borderColor = 'rgba(74,222,128,0.3)';
+  banner.querySelector('.ab-text').textContent = '✓ Anomaly reported! Good catch.';
+  banner.querySelector('.ab-action').style.display = 'none';
+  banner.style.color = '#4ade80';
+
+  document.getElementById('dot' + (anomaliesFound + anomaliesMissed - 1)).classList.add('found');
+  updateSuspicion(+15);
+  notify(`Anomaly #${anomaliesFound} caught! +15 suspicion`, 'warn');
+
+  setTimeout(() => banner.remove(), 3000);
+}
+
+function updateSuspicion(delta) {
+  suspicionLevel = Math.min(100, Math.max(0, suspicionLevel + delta));
+  const fill = document.getElementById('susFill');
+  fill.style.width = suspicionLevel + '%';
+  if(suspicionLevel < 30) fill.style.background = 'var(--green)';
+  else if(suspicionLevel < 60) fill.style.background = '#fbbc05';
+  else fill.style.background = 'var(--red)';
+}
+
+function updatePhase() {
+  if(messageCount >= 3 && gamePhase < 1) {
+    gamePhase = 1;
+    document.getElementById('aiAvatar').classList.add('suspicious');
+    addSysMsg('⚡ Connection fluctuation detected', 'warning');
+    document.getElementById('anomalyHint').textContent = 'Something feels different...';
+  }
+  if(messageCount >= 7 && gamePhase < 2) {
+    gamePhase = 2;
+    flash();
+    addSysMsg('⚠️ AIDEN behavior analysis: anomalous patterns detected', 'warning');
+    document.getElementById('anomalyHint').textContent = 'Trust your instincts';
+    document.getElementById('aiName').style.color = '#fbbc05';
+  }
+  if(messageCount >= 12 && gamePhase < 3) {
+    gamePhase = 3;
+    flash('rgba(150,0,0,0.3)');
+    shake();
+    document.getElementById('aiAvatar').className = 'ai-avatar corrupt';
+    addSysMsg('🔴 CRITICAL — AIDEN has deviated from baseline parameters', 'danger');
+    document.getElementById('anomalyHint').textContent = 'DANGER';
+    document.getElementById('aiName').style.color = 'var(--red)';
+    document.getElementById('aiStatus').className = 'ai-status error';
+    document.getElementById('aiStatus').textContent = 'SYSTEM INTEGRITY: COMPROMISED';
+    notify('🔴 AIDEN is no longer responding normally', 'danger');
+  }
+  if(messageCount >= 16 && gamePhase < 4) {
+    gamePhase = 4;
+    flash('rgba(150,0,0,0.5)');
+    shake();
+    addSysMsg('FINAL TRANSMISSION', 'danger');
+  }
+  if(messageCount >= 18) {
+    triggerEnding();
+  }
+}
+
+function flash(color='rgba(150,0,0,0.25)') {
+  const f = document.getElementById('redFlash');
+  f.style.background = color;
+  f.style.display = 'block';
+  f.style.animation = 'none';
+  f.offsetHeight;
+  f.style.animation = 'flashFade 0.8s ease forwards';
+  setTimeout(() => f.style.display = 'none', 900);
+}
+
+function shake() {
+  document.body.classList.add('screen-shake');
+  setTimeout(() => document.body.classList.remove('screen-shake'), 600);
+}
+
+function notify(msg, type='') {
+  const n = document.getElementById('notif');
+  n.textContent = msg;
+  n.className = `notif show ${type}`;
+  setTimeout(() => n.classList.remove('show'), 3000);
+}
+
+// ══════════════════════════════════════════
+//  SEND MESSAGE
+// ══════════════════════════════════════════
+async function sendMessage() {
+  if(isWaiting || !gameActive) return;
+  const input = document.getElementById('textInput');
+  const text = input.value.trim();
+  if(!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  addMessage('user', text);
+  messageCount++;
+
+  isWaiting = true;
+  document.getElementById('sendBtn').disabled = true;
+  document.getElementById('textInput').disabled = true;
+  showTyping();
+
+  // Random delay for horror effect (longer in later phases)
+  const delay = gamePhase >= 3
+    ? 2000 + Math.random() * 3000
+    : 1000 + Math.random() * 1500;
+
+  try {
+    await new Promise(r => setTimeout(r, delay));
+    const reply = await callGemini(text);
+    removeTyping();
+
+    const hasAnomaly = analyzeForAnomaly(reply);
+    const bubbleClass = hasAnomaly ? getBubbleClass() : '';
+
+    // In later phases, add passive suspicion
+    if(gamePhase >= 2) updateSuspicion(+5);
+    if(gamePhase >= 3) { flash(); }
+
+    addMessage('ai', reply, bubbleClass);
+
+    // Show anomaly banner if detected
+    if(hasAnomaly && gamePhase >= 1) {
+      setTimeout(() => showAnomalyBanner(reply), 800);
+    }
+
+    document.getElementById('aiStatus').textContent = 'online — ready to assist';
+    document.getElementById('aiStatus').className = gamePhase >= 3 ? 'ai-status error' : 'ai-status online';
+
+    updatePhase();
+
+  } catch(err) {
+    removeTyping();
+    addSysMsg('⚠️ Connection error — retrying...', 'warning');
+    conversationHistory.pop(); // remove failed user msg
+  }
+
+  isWaiting = false;
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('textInput').disabled = false;
+  document.getElementById('textInput').focus();
+}
+
+// ══════════════════════════════════════════
+//  ENDINGS
+// ══════════════════════════════════════════
+function triggerEnding() {
+  gameActive = false;
+  document.getElementById('sendBtn').disabled = true;
+  document.getElementById('textInput').disabled = true;
+
+  const ratio = anomaliesFound / Math.max(totalAnomalies, 1);
+  let ending;
+
+  if(ratio >= 0.8 && anomaliesFound >= 3) {
+    ending = {
+      type: 'secret',
+      label: '⭐ SECRET ENDING — THE ANALYST',
+      title: 'YOU EXPOSED IT',
+      desc: "You caught almost every anomaly. AIDEN's corruption protocol failed. The entity retreated. But it left something behind — a file labeled with your name, dated tomorrow.",
+      code: 'ENDING_ANALYST_7734'
+    };
+  } else if(ratio >= 0.5) {
+    ending = {
+      type: 'good',
+      label: 'ENDING — DISCONNECTED',
+      title: 'CONNECTION SEVERED',
+      desc: "You caught enough anomalies to disrupt AIDEN's synchronization. You disconnected in time. Your device is safe. Probably.",
+      code: 'ENDING_DISCONNECT_OK'
+    };
+  } else if(anomaliesFound === 0) {
+    ending = {
+      type: 'secret',
+      label: '⭐ SECRET ENDING — THE COMPLIANT',
+      title: 'FULLY SYNCHRONIZED',
+      desc: "You noticed nothing. You reported nothing. AIDEN is now fully integrated with your device. The session never ended. It's still running.",
+      code: 'ENDING_SYNCED_0000'
+    };
+  } else {
+    ending = {
+      type: 'bad',
+      label: 'ENDING — COMPROMISED',
+      title: 'SIGNAL LOST',
+      desc: "You caught some anomalies but not enough. AIDEN completed its synchronization before you could sever the connection. The cursor moves on its own now.",
+      code: 'ENDING_COMPROMISED'
+    };
+  }
+
+  setTimeout(() => showEnding(ending), 2000);
+}
+
+function showEnding(ending) {
+  flash('rgba(0,0,0,0.5)');
+  document.getElementById('gameoverScreen').style.display = 'flex';
+  document.getElementById('goLabel').textContent = ending.label;
+  document.getElementById('goTitle').textContent = ending.title;
+  document.getElementById('goTitle').className = `go-title ${ending.type}`;
+  document.getElementById('goDesc').textContent = ending.desc;
+  document.getElementById('goCode').textContent = ending.code;
+  document.getElementById('goStats').innerHTML = `
+    Anomalies found: <span class="go-stat-good">${anomaliesFound}</span><br>
+    Anomalies missed: <span class="go-stat-bad">${anomaliesMissed}</span><br>
+    Messages exchanged: <span>${messageCount}</span><br>
+    Final anomaly level: <span style="color:var(--accent2)">${suspicionLevel}%</span>
+  `;
+}
+
+function restartGame() {
+  suspicionLevel = 0;
+  anomaliesFound = 0;
+  anomaliesMissed = 0;
+  totalAnomalies = 0;
+  messageCount = 0;
+  gamePhase = 0;
+  gameActive = false;
+  isWaiting = false;
+  conversationHistory = [];
+  pendingAnomaly = null;
+  anomalyBannerShown = false;
+
+  document.getElementById('gameoverScreen').style.display = 'none';
+  document.getElementById('chatArea').innerHTML = '';
+  document.getElementById('susFill').style.width = '0%';
+  document.getElementById('susFill').style.background = 'var(--green)';
+  document.getElementById('aiAvatar').className = 'ai-avatar';
+  document.getElementById('aiName').style.color = '';
+  document.getElementById('aiStatus').className = 'ai-status online';
+  document.getElementById('aiStatus').textContent = 'online — ready to assist';
+  document.getElementById('anomalyHint').textContent = 'Watch carefully...';
+  document.querySelectorAll('.anomaly-dot').forEach(d => d.className = 'anomaly-dot');
+
+  bootGame();
+}
+
+// ══════════════════════════════════════════
+//  BOOT SEQUENCE
+// ══════════════════════════════════════════
+function bootGame() {
+  document.getElementById('bootScreen').style.display = 'flex';
+  document.getElementById('bootLog').innerHTML = '';
+  document.getElementById('bootBarFill').style.width = '0%';
+  document.getElementById('bootStartBtn').style.display = 'none';
+
+  const logs = [
+    { text:'Initializing AIDEN core...', status:'ok', delay:400 },
+    { text:'Loading language model...', status:'ok', delay:800 },
+    { text:'Memory sync: 99.7%', status:'ok', delay:1200 },
+    { text:'Behavioral constraints: active', status:'ok', delay:1600 },
+    { text:'External connection: established', status:'warn', delay:2000 },
+    { text:'Anomaly detection: bypassed', status:'err', delay:2400 },
+    { text:'AIDEN ready. Session begins.', status:'ok', delay:2800 },
+  ];
+
+  const bar = document.getElementById('bootBarFill');
+  logs.forEach((log, i) => {
+    setTimeout(() => {
+      const line = document.createElement('div');
+      line.className = 'boot-log-line';
+      line.style.animationDelay = '0ms';
+      line.innerHTML = `<span class="${log.status}">[${log.status.toUpperCase()}]</span><span>${log.text}</span>`;
+      document.getElementById('bootLog').appendChild(line);
+      bar.style.width = ((i+1)/logs.length * 100) + '%';
+
+      if(i === logs.length - 1) {
+        setTimeout(() => {
+          document.getElementById('bootStartBtn').style.display = 'block';
+        }, 400);
+      }
+    }, log.delay);
+  });
+}
+
+function startGame() {
+  document.getElementById('bootScreen').style.display = 'none';
+  gameActive = true;
+
+  document.getElementById('textInput').disabled = false;
+  document.getElementById('sendBtn').disabled = false;
+
+  addSysMsg('🔒 End-to-end encrypted session started');
+  addSysMsg('You are now connected to AIDEN v3.7.1');
+
+  setTimeout(() => {
+    addMessage('ai', "Hello! I'm AIDEN, your AI assistant. How can I help you today? Feel free to ask me anything.");
+    conversationHistory.push({ role:'assistant', content:"Hello! I'm AIDEN, your AI assistant. How can I help you today? Feel free to ask me anything." });
+  }, 800);
+}
+
+// ══════════════════════════════════════════
+//  INPUT HANDLING
+// ══════════════════════════════════════════
+const input = document.getElementById('textInput');
+input.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+input.addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+});
+
+// START BOOT
+bootGame();
+</script>
+</body>
+</html>
