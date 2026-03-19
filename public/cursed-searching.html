@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Giggle</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Product+Sans:wght@400;700&family=Share+Tech+Mono&family=Creepster&display=swap');
+
+/* ══════════════════════════════
+   CSS VARIABLES
+══════════════════════════════ */
+:root {
+  --bg: #202124;
+  --bg2: #303134;
+  --bg3: #3c4043;
+  --text: #e8eaed;
+  --text2: #9aa0a6;
+  --border: #5f6368;
+  --blue: #8ab4f8;
+  --green: #81c995;
+  --red: #f28b82;
+  --accent: #8ab4f8;
+  --horror: #cc0000;
+  --horror2: #ff4444;
+  --corrupt: 0;
+  --glitch: 0;
+  --font-main: 'Share Tech Mono', monospace;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  font-family: var(--font-main);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  cursor: default;
+  transition: background 1s;
+}
+
+/* SCANLINE */
+body::after {
+  content:'';
+  position:fixed;
+  inset:0;
+  background: repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,255,0,0.008) 3px,rgba(0,255,0,0.008) 6px);
+  pointer-events:none;
+  z-index:9999;
+  opacity: var(--corrupt);
+  transition: opacity 1s;
+}
+
+/* ══════════════════════════════
+   SCREENS
+══════════════════════════════ */
+.screen { display:none; min-height:100dvh; flex-direction:column; }
+.screen.active { display:flex; }
+
+/* ══════════════════════════════
+   LANGUAGE SELECTOR
+══════════════════════════════ */
+#langScreen {
+  align-items:center;
+  justify-content:center;
+  gap:24px;
+  background: #111;
+}
+
+.lang-title {
+  font-family: 'Creepster', cursive;
+  font-size: 42px;
+  color: #cc0000;
+  text-shadow: 0 0 30px rgba(200,0,0,0.4);
+  letter-spacing: 3px;
+}
+
+.lang-sub { color: #555; font-size: 12px; letter-spacing: 2px; }
+
+.lang-btns { display:flex; gap:14px; }
+
+.lang-btn {
+  padding: 12px 28px;
+  border: 1px solid #333;
+  background: transparent;
+  color: #aaa;
+  font-family: var(--font-main);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  letter-spacing: 2px;
+  transition: all 0.2s;
+}
+
+.lang-btn:hover { border-color: #cc0000; color: #ff4444; background: rgba(200,0,0,0.1); }
+
+/* ══════════════════════════════
+   GOOGLE-STYLE HEADER (search pages)
+══════════════════════════════ */
+.g-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--bg3);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 100;
+}
+
+.g-logo-small {
+  font-family: 'Product Sans', var(--font-main);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.g-logo-small .g1{color:#ea4335}
+.g-logo-small .g2{color:#fbbc05}
+.g-logo-small .g3{color:#4285f4}
+.g-logo-small .g4{color:#ea4335}
+.g-logo-small .g5{color:#34a853}
+.g-logo-small .g6{color:#4285f4}
+
+.g-searchbar-mini {
+  flex:1;
+  display:flex;
+  align-items:center;
+  background: var(--bg2);
+  border: 1px solid var(--bg3);
+  border-radius: 24px;
+  padding: 8px 14px;
+  gap: 10px;
+  cursor: text;
+}
+
+.g-searchbar-mini input {
+  flex:1;
+  background:transparent;
+  border:none;
+  outline:none;
+  color:var(--text);
+  font-family:var(--font-main);
+  font-size:14px;
+}
+
+.g-searchbar-mini .search-icon { color:var(--text2); font-size:16px; }
+.g-header-icons { display:flex; gap:10px; color:var(--text2); font-size:18px; }
+
+/* TABS */
+.g-tabs {
+  display:flex;
+  gap:0;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--bg3);
+  overflow-x:auto;
+}
+
+.g-tab {
+  padding: 10px 14px;
+  font-size:13px;
+  color:var(--text2);
+  cursor:pointer;
+  border-bottom: 3px solid transparent;
+  white-space:nowrap;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  transition: color 0.2s;
+}
+
+.g-tab.active { color:var(--blue); border-bottom-color:var(--blue); }
+.g-tab:hover:not(.active) { color:var(--text); }
+
+/* RESULTS INFO */
+.results-info {
+  padding: 8px 16px;
+  font-size: 12px;
+  color: var(--text2);
+}
+
+/* ══════════════════════════════
+   MAIN SEARCH PAGE (Episode homepage)
+══════════════════════════════ */
+#searchHome {
+  align-items:center;
+}
+
+.home-top { width:100%; padding: 10px 16px; display:flex; justify-content:flex-end; gap:14px; }
+.home-top-link { color:var(--text2); font-size:13px; cursor:pointer; }
+.home-top-link:hover { color:var(--text); }
+
+.home-center {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:24px;
+  padding: 20px;
+  width:100%;
+}
+
+.giggle-logo {
+  font-family: 'Product Sans', var(--font-main);
+  font-size: 64px;
+  font-weight:700;
+  letter-spacing:-2px;
+  transition: all 0.5s;
+  user-select:none;
+}
+
+.giggle-logo .g1{color:#ea4335}
+.giggle-logo .g2{color:#fbbc05}
+.giggle-logo .g3{color:#4285f4}
+.giggle-logo .g4{color:#ea4335}
+.giggle-logo .g5{color:#34a853}
+.giggle-logo .g6{color:#4285f4}
+
+.home-searchbox {
+  width:100%;
+  max-width:540px;
+  background:var(--bg2);
+  border:1px solid var(--bg3);
+  border-radius:24px;
+  padding:12px 18px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  cursor:text;
+  transition: box-shadow 0.2s, border-color 0.5s;
+}
+
+.home-searchbox:focus-within {
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  border-color: var(--bg3);
+}
+
+.home-searchbox input {
+  flex:1;
+  background:transparent;
+  border:none;
+  outline:none;
+  color:var(--text);
+  font-family:var(--font-main);
+  font-size:16px;
+}
+
+.home-searchbox .si { color:var(--text2); font-size:20px; }
+.home-searchbox .mic { color:var(--text2); font-size:18px; }
+
+.home-btns {
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+
+.home-btn {
+  padding:10px 18px;
+  background:var(--bg2);
+  border:1px solid var(--bg2);
+  border-radius:4px;
+  color:var(--text2);
+  font-family:var(--font-main);
+  font-size:13px;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+
+.home-btn:hover { box-shadow:0 1px 3px rgba(0,0,0,0.4); border-color:var(--bg3); color:var(--text); }
+
+.home-footer { width:100%; padding:12px 16px; }
+.home-footer-links { display:flex; gap:16px; flex-wrap:wrap; }
+.home-footer-link { color:var(--text2); font-size:12px; cursor:pointer; }
+
+/* EPISODE BADGE */
+.episode-badge {
+  background: rgba(200,0,0,0.15);
+  border: 1px solid rgba(200,0,0,0.3);
+  color: #ff6666;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  letter-spacing: 1px;
+}
+
+/* ══════════════════════════════
+   SEARCH RESULTS PAGE
+══════════════════════════════ */
+#resultsPage {
+  flex-direction:column;
+}
+
+.results-list {
+  padding: 8px 16px;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+
+/* RESULT CARD */
+.result-card {
+  padding: 14px 0;
+  border-bottom: 1px solid transparent;
+  cursor:pointer;
+  transition: background 0.15s;
+  border-radius: 8px;
+  padding: 12px 10px;
+  animation: fadeSlideIn 0.3s ease both;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity:0; transform:translateY(8px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+.result-card:hover { background: rgba(255,255,255,0.04); }
+
+.result-source {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:4px;
+}
+
+.result-favicon {
+  width:18px; height:18px;
+  border-radius:50%;
+  background:var(--bg3);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:10px;
+  flex-shrink:0;
+}
+
+.result-domain { font-size:12px; color:var(--text2); }
+.result-url { font-size:11px; color:var(--text2); opacity:0.7; }
+
+.result-title {
+  font-size:18px;
+  color:var(--blue);
+  margin-bottom:4px;
+  line-height:1.3;
+  font-weight:normal;
+}
+
+.result-title:hover { text-decoration:underline; }
+
+.result-desc {
+  font-size:13px;
+  color:var(--text2);
+  line-height:1.6;
+}
+
+/* HORROR RESULT */
+.result-card.horror .result-title { color: var(--red); }
+.result-card.horror .result-domain { color: #884444; }
+.result-card.horror .result-desc { color: #886666; }
+.result-card.horror { background: rgba(100,0,0,0.08) !important; border-left: 2px solid #500000 !important; }
+
+/* ANOMALY RESULT — looks almost normal but slightly off */
+.result-card.anomaly .result-title { color: #c8a0a0; }
+
+/* SPECIAL RESULT — for choices */
+.result-card.choice-card {
+  border: 1px solid var(--bg3);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+  position:relative;
+}
+
+.result-card.choice-card.danger-choice {
+  border-color: rgba(200,0,0,0.3);
+  background: rgba(100,0,0,0.06);
+}
+
+.choice-tag {
+  position:absolute;
+  top:8px; right:8px;
+  font-size:10px;
+  padding:2px 8px;
+  border-radius:10px;
+  background:rgba(255,255,255,0.08);
+  color:var(--text2);
+}
+
+.choice-tag.danger { background:rgba(200,0,0,0.2); color:#ff8888; }
+
+/* FEATURED SNIPPET */
+.featured-snippet {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--bg3);
+  border-radius: 8px;
+  padding: 14px;
+  margin: 8px 0;
+  font-size:13px;
+  color:var(--text2);
+  line-height:1.7;
+}
+
+.featured-snippet.horror {
+  background: rgba(100,0,0,0.1);
+  border-color: rgba(200,0,0,0.2);
+  color: #aa7777;
+}
+
+.snippet-title {
+  font-size:12px;
+  color:var(--text2);
+  opacity:0.6;
+  margin-bottom:6px;
+  letter-spacing:1px;
+}
+
+/* PEOPLE ALSO ASK */
+.paa-section { padding:8px 16px; }
+.paa-title { font-size:18px; color:var(--text); margin-bottom:8px; font-weight:normal; }
+
+.paa-item {
+  border: 1px solid var(--bg3);
+  border-radius:8px;
+  margin-bottom:6px;
+  overflow:hidden;
+}
+
+.paa-q {
+  padding:12px 14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+  font-size:14px;
+  color:var(--text);
+  transition: background 0.15s;
+}
+
+.paa-q:hover { background:rgba(255,255,255,0.04); }
+.paa-a { padding:0 14px; max-height:0; overflow:hidden; transition:max-height 0.3s, padding 0.3s; font-size:13px; color:var(--text2); line-height:1.7; }
+.paa-a.open { max-height:200px; padding:10px 14px; }
+
+/* ══════════════════════════════
+   CORRUPTION EFFECTS
+══════════════════════════════ */
+.corrupt-text {
+  animation: textCorrupt 0.1s steps(2) infinite;
+}
+
+@keyframes textCorrupt {
+  0% { filter:none; }
+  50% { filter:brightness(2) hue-rotate(60deg); }
+  100% { filter:none; }
+}
+
+.glitch-logo {
+  animation: logoGlitch 3s infinite;
+}
+
+@keyframes logoGlitch {
+  0%,85%,100% { transform:skew(0deg); filter:none; }
+  86% { transform:skew(-2deg); filter:brightness(1.5); }
+  87% { transform:skew(2deg); }
+  88% { transform:skew(0deg); filter:none; }
+  92% { transform:skew(-1deg) scaleX(1.02); filter:brightness(2) hue-rotate(30deg); }
+  93% { transform:skew(0deg); filter:none; }
+}
+
+/* RED SCREEN FLASH */
+.red-flash {
+  position:fixed;
+  inset:0;
+  background:rgba(150,0,0,0.2);
+  pointer-events:none;
+  z-index:9998;
+  display:none;
+  animation:flashOut 0.6s ease forwards;
+}
+
+@keyframes flashOut { from{opacity:1} to{opacity:0} }
+
+/* ══════════════════════════════
+   TRANSITION SCREEN
+══════════════════════════════ */
+#transitionScreen {
+  background:#000;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:16px;
+}
+
+.trans-logo {
+  font-family:'Creepster',cursive;
+  font-size:48px;
+  color:#cc0000;
+  text-shadow:0 0 40px rgba(200,0,0,0.5);
+  letter-spacing:4px;
+}
+
+.trans-ep {
+  font-size:13px;
+  color:#555;
+  letter-spacing:3px;
+}
+
+.trans-bar {
+  width:200px;
+  height:2px;
+  background:#1a1a1a;
+  border-radius:1px;
+  overflow:hidden;
+}
+
+.trans-bar-fill {
+  height:100%;
+  background:linear-gradient(90deg, #cc0000, #ff4444);
+  width:0%;
+  animation: barFill 2s ease forwards;
+}
+
+@keyframes barFill { to{width:100%} }
+
+.trans-msg { font-size:11px; color:#444; letter-spacing:2px; text-align:center; }
+
+/* ══════════════════════════════
+   ENDING SCREEN
+══════════════════════════════ */
+#endingScreen {
+  background:#000;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:20px;
+  padding:30px;
+  text-align:center;
+}
+
+.ending-label {
+  font-size:11px;
+  color:#555;
+  letter-spacing:4px;
+}
+
+.ending-title {
+  font-family:'Creepster',cursive;
+  font-size:46px;
+  line-height:1.1;
+  text-shadow:0 0 30px currentColor;
+}
+
+.ending-title.bad { color:#cc0000; }
+.ending-title.good { color:#34a853; }
+.ending-title.secret { color:#fbbc05; animation:secretGlow 2s infinite alternate; }
+
+@keyframes secretGlow {
+  from{text-shadow:0 0 20px rgba(251,188,5,0.3);}
+  to{text-shadow:0 0 60px rgba(251,188,5,0.8);}
+}
+
+.ending-desc {
+  max-width:300px;
+  font-size:13px;
+  color:#666;
+  line-height:1.8;
+}
+
+.ending-code {
+  font-size:11px;
+  color:#333;
+  border:1px solid #222;
+  padding:6px 16px;
+  border-radius:20px;
+  letter-spacing:2px;
+}
+
+.ending-btns { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:8px; }
+
+.ending-btn {
+  padding:10px 24px;
+  border:1px solid #333;
+  background:transparent;
+  color:#888;
+  font-family:var(--font-main);
+  font-size:12px;
+  cursor:pointer;
+  border-radius:4px;
+  letter-spacing:2px;
+  transition:all 0.2s;
+}
+
+.ending-btn.primary { border-color:#4285f4; color:#8ab4f8; }
+.ending-btn:hover { background:rgba(255,255,255,0.05); color:#ccc; }
+
+/* ENDINGS TRACKER */
+.endings-tracker {
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+
+.ending-dot {
+  width:10px; height:10px;
+  border-radius:50%;
+  background:#222;
+  border:1px solid #333;
+  transition:all 0.5s;
+}
+
+.ending-dot.found.bad { background:#cc0000; border-color:#ff4444; box-shadow:0 0 8px rgba(200,0,0,0.5); }
+.ending-dot.found.good { background:#34a853; border-color:#81c995; box-shadow:0 0 8px rgba(52,168,83,0.5); }
+.ending-dot.found.secret { background:#fbbc05; border-color:#fdd663; box-shadow:0 0 8px rgba(251,188,5,0.5); }
+
+/* ══════════════════════════════
+   NOTIFY POPUP
+══════════════════════════════ */
+.notify-popup {
+  position:fixed;
+  top:60px; right:16px;
+  background:#cc0000;
+  color:#fff;
+  padding:10px 16px;
+  border-radius:8px;
+  font-size:12px;
+  z-index:9997;
+  opacity:0;
+  transform:translateX(20px);
+  transition:all 0.3s;
+  pointer-events:none;
+  max-width:200px;
+  line-height:1.5;
+}
+
+.notify-popup.show { opacity:1; transform:translateX(0); }
+
+/* SHAKE */
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  10%,30%,50%,70%,90%{transform:translateX(-5px)}
+  20%,40%,60%,80%{transform:translateX(5px)}
+}
+.shake { animation:shake 0.5s ease; }
+
+/* FADE IN */
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.fade-in { animation:fadeIn 0.5s ease; }
+
+/* MOBILE TOUCH RIPPLE */
+.ripple {
+  position:absolute;
+  border-radius:50%;
+  background:rgba(255,255,255,0.1);
+  transform:scale(0);
+  animation:rippleOut 0.6s ease;
+  pointer-events:none;
+}
+@keyframes rippleOut { to{transform:scale(4);opacity:0;} }
+</style>
+</head>
+<body>
+
+<div class="red-flash" id="redFlash"></div>
+<div class="notify-popup" id="notifyPopup"></div>
+
+<!-- ════════════════════════════════
+     LANGUAGE SCREEN
+════════════════════════════════ -->
+<div class="screen active" id="langScreen">
+  <div class="lang-title">CURSED SEARCHING</div>
+  <div class="lang-sub">choose your language / pilih bahasa</div>
+  <div class="lang-btns">
+    <button class="lang-btn" onclick="setLang('en')">ENGLISH</button>
+    <button class="lang-btn" onclick="setLang('id')">INDONESIA</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     TRANSITION SCREEN
+════════════════════════════════ -->
+<div class="screen" id="transitionScreen">
+  <div class="trans-logo">GIGGLE</div>
+  <div class="trans-ep" id="transEpLabel">EPISODE 1</div>
+  <div class="trans-bar"><div class="trans-bar-fill"></div></div>
+  <div class="trans-msg" id="transMsg">loading results...</div>
+</div>
+
+<!-- ════════════════════════════════
+     SEARCH HOME (per episode)
+════════════════════════════════ -->
+<div class="screen" id="searchHome">
+  <div class="home-top">
+    <span class="home-top-link" id="homeLangLink">Gmail</span>
+    <span class="home-top-link">Images</span>
+    <span class="home-top-link" style="background:#8ab4f8;color:#000;padding:8px 14px;border-radius:4px;font-size:12px;" id="homeSignIn">Sign in</span>
+  </div>
+  <div class="home-center">
+    <div class="episode-badge" id="homeBadge">EPISODE 1</div>
+    <div class="giggle-logo" id="giggleLogo">
+      <span class="g1">G</span><span class="g2">i</span><span class="g3">g</span><span class="g4">g</span><span class="g5">l</span><span class="g6">e</span>
+    </div>
+    <div class="home-searchbox" onclick="document.getElementById('homeInput').focus()">
+      <span class="si">🔍</span>
+      <input type="text" id="homeInput" autocomplete="off" spellcheck="false">
+      <span class="mic">🎤</span>
+    </div>
+    <div class="home-btns">
+      <button class="home-btn" id="searchBtn1" onclick="doSearch()"></button>
+      <button class="home-btn" id="searchBtn2" onclick="feelingLucky()"></button>
+    </div>
+    <div style="font-size:11px;color:#555;text-align:center;" id="homeOffer"></div>
+  </div>
+  <div class="home-footer">
+    <div class="home-footer-links" id="homeFooterLinks"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     RESULTS PAGE
+════════════════════════════════ -->
+<div class="screen" id="resultsPage">
+  <div class="g-header">
+    <div class="g-logo-small">
+      <span class="g1">G</span><span class="g2">i</span><span class="g3">g</span><span class="g4">g</span><span class="g5">l</span><span class="g6">e</span>
+    </div>
+    <div class="g-searchbar-mini">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="miniSearchInput" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')doMiniSearch()">
+    </div>
+    <div class="g-header-icons">
+      <span>⚙️</span>
+    </div>
+  </div>
+  <div class="g-tabs" id="gTabs"></div>
+  <div class="results-info" id="resultsInfo"></div>
+  <div class="results-list" id="resultsList"></div>
+  <div class="paa-section" id="paaSection" style="display:none"></div>
+</div>
+
+<!-- ════════════════════════════════
+     ENDING SCREEN
+════════════════════════════════ -->
+<div class="screen" id="endingScreen">
+  <div class="ending-label" id="endingLabel">ENDING 1 OF 6</div>
+  <div class="ending-title" id="endingTitle">YOU ESCAPED</div>
+  <div class="ending-desc" id="endingDesc"></div>
+  <div class="ending-code" id="endingCode"></div>
+  <div style="font-size:11px;color:#444;margin-top:4px;" id="endingFoundLabel"></div>
+  <div class="endings-tracker" id="endingsTracker"></div>
+  <div class="ending-btns">
+    <button class="ending-btn primary" onclick="restartGame()" id="endPlayAgain"></button>
+    <button class="ending-btn" onclick="showAllEndings()" id="endViewEndings"></button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let lang = 'en';
+let currentEpisode = 0;
+let foundEndings = JSON.parse(localStorage.getItem('cursed_endings') || '[]');
+let corruptLevel = 0; // 0-3, increases per episode
+
+// ══════════════════════════════════════════
+//  TRANSLATIONS
+// ══════════════════════════════════════════
+const T = {
+  en: {
+    searchBtn1: 'Giggle Search',
+    searchBtn2: "I'm Feeling Lucky",
+    homeOffer: 'Giggle offered in: Indonesia • Basa Bali',
+    footerLinks: ['Advertising','Business','Privacy','Terms','Settings'],
+    tabs: ['🔍 All','📰 News','🖼️ Images','📹 Videos','🗺️ Maps'],
+    resultsInfo: (n,q) => `About ${n} results for "${q}"`,
+    episodes: [
+      { badge:'EPISODE 1', query:'how to find missing person', title:'The Search Begins' },
+      { badge:'EPISODE 2', query:'why do i hear things at 3am', title:'The Signal' },
+      { badge:'EPISODE 3', query:'how to stop being watched', title:'They Know' },
+      { badge:'EPISODE 4', query:'what is behind your screen right now', title:'THE FINAL QUERY' },
+    ],
+    transMsg: ['loading results...','fetching from dark index...','decrypting cached pages...','WARNING: unsafe content detected...'],
+    paaTitle: 'People also ask',
+    endingFoundLabel: 'Endings found:',
+    playAgain: 'PLAY AGAIN',
+    viewEndings: 'ALL ENDINGS',
+
+    endings: {
+      e1_good: { type:'good', title:'YOU ESCAPED', desc:"You closed the browser in time. Whatever was on the other side of your screen didn't get through. This time.", code:'ENDING_01_SAFE', label:'ENDING 1 OF 6' },
+      e1_bad: { type:'bad', title:'FIRST VICTIM', desc:"You clicked the wrong link. The cursor moved on its own after that. Your search history was the last thing you ever saw.", code:'ENDING_02_INDEXED', label:'ENDING 2 OF 6' },
+      e2_good: { type:'good', title:'SIGNAL LOST', desc:"You disconnected your WiFi at the right moment. The frequency stopped. You could still hear it for three days.", code:'ENDING_03_STATIC', label:'ENDING 3 OF 6' },
+      e2_bad: { type:'bad', title:'FREQUENCY FOUND', desc:"You kept listening. Now you understand. Now you can never stop listening. The signal has a name, and it's yours.", code:'ENDING_04_TUNED', label:'ENDING 4 OF 6' },
+      e3_secret: { type:'secret', title:'THE OBSERVER', desc:"You searched for the watcher and became one. You can see them now — through every screen, every camera. Was this freedom or a curse?", code:'SECRET_ENDING_01', label:'⭐ SECRET ENDING 1' },
+      e4_secret: { type:'secret', title:'BEHIND THE GLASS', desc:"You typed the forbidden query. The answer stared back. Not from the screen — from behind your own reflection. It always knew you'd get here.", code:'SECRET_ENDING_02', label:'⭐ SECRET ENDING 2' },
+    },
+
+    results: {
+      ep1: {
+        query: 'how to find missing person',
+        info: 'About 4,830,000,000 results (0.43 seconds)',
+        snippet: { title:'Quick Answer', text:"Contact local authorities immediately. File a missing person report within 24 hours. Do NOT attempt to search alone in unfamiliar areas. If you receive anonymous tips, do not follow them." },
+        normal: [
+          { favicon:'🏛️', domain:'gov.missingpersons.org', url:'gov.missingpersons.org › how-to-report', title:'How to Report a Missing Person | Official Guide', desc:'Step-by-step guide to filing a missing person report. Include recent photos, last known location, clothing description...' },
+          { favicon:'📰', domain:'wikihow.com', url:'wikihow.com › Find-a-Missing-Person', title:'4 Ways to Find a Missing Person - wikiHow', desc:'Contact local law enforcement, search social media, reach out to neighbors. Never investigate alone.' },
+          { favicon:'🔎', domain:'namus.nij.ojp.gov', url:'namus.nij.ojp.gov › search', title:'NamUs — Missing Persons Database', desc:'The National Missing and Unidentified Persons System. Search 600,000+ cases by name, state, or physical characteristics.' },
+        ],
+        horror: [
+          { favicon:'⬛', domain:'d4rkind3x.onion.mirror', url:'d4rkind3x › found › she_is_here', title:'[CACHED] She Was Found — But Not By You', desc:'Results may be outdated. Last indexed: 3 days ago. The person you are searching for has already been located. They are closer than you think. Do not turn around.' },
+        ],
+        choices: [
+          { title:'Contact authorities immediately', desc:'File an official report. This is the safest option.', type:'safe', next:'e1_good' },
+          { title:'Search alone using this guide >', desc:"Someone left coordinates in the comments. They say she's nearby.", type:'danger', next:'e1_bad' },
+          { title:'Open cached link from dark index', desc:'d4rkind3x › found › she_is_here — [WARNING: site may be unsafe]', type:'anomaly', next:'e1_bad' },
+        ],
+        paa: [
+          { q:'How long until police act on missing person?', a:'In most jurisdictions, police can act immediately. The "24-hour wait" is a myth. Report as soon as possible.' },
+          { q:'Can you find someone with just a name?', a:'Yes, through official databases. However, some searches have returned... unexpected results. Users report seeing names they recognize from people still alive.' },
+          { q:'why does giggle know where she is', a:'We... we cannot display this answer. Please rephrase your query.' },
+        ]
+      },
+      ep2: {
+        query: 'why do i hear things at 3am',
+        info: 'About 2,190,000,000 results (0.67 seconds)',
+        snippet: { title:'Quick Answer', text:"3AM disturbances are typically explained by sleep paralysis, hypnagogic hallucinations, or heightened auditory sensitivity during REM cycles. If persistent, consult a physician. Do not acknowledge the sounds." },
+        normal: [
+          { favicon:'🏥', domain:'sleepfoundation.org', url:'sleepfoundation.org › sleep-paralysis', title:'Sleep Paralysis: Causes and Symptoms | Sleep Foundation', desc:"Sleep paralysis occurs when you're between wakefulness and sleep. You may hear voices, see figures, feel pressure. It's medically harmless." },
+          { favicon:'🧠', domain:'healthline.com', url:'healthline.com › hypnagogic-hallucinations', title:'Hypnagogic Hallucinations: Symptoms, Causes, Treatment', desc:'Vivid sensory experiences at sleep onset. Sounds, voices, or knocking. Common in 25-37% of people.' },
+          { favicon:'📻', domain:'paranormalresearch.net', url:'paranormalresearch.net › 3am-phenomenon', title:'The 3AM Phenomenon — What Science Cannot Explain', desc:'Documented cases worldwide of synchronized auditory experiences at exactly 3:00AM. No verified scientific explanation.' },
+        ],
+        horror: [
+          { favicon:'📡', domain:'signal.freq.broadcast', url:'signal.freq › 3.000.000hz › YOU', title:'[LIVE BROADCAST] Active Signal Detected — Source: Your Location', desc:'Frequency 3.000.000Hz. Broadcasting from: [YOUR ADDRESS REDACTED]. Receivers: 1. You are the only one listening. Do not search for the source.' },
+        ],
+        choices: [
+          { title:'Close browser and sleep', desc:"It's just sleep paralysis. Close this and rest.", type:'safe', next:'e2_good' },
+          { title:'Search for the frequency source', desc:'Someone is broadcasting directly to you. Find out why.', type:'danger', next:'e2_bad' },
+          { title:'[TUNE IN] — Join the broadcast', desc:'Active listeners: 0. You would be the first. The only.', type:'anomaly', next:'e2_bad' },
+        ],
+        paa: [
+          { q:'Is 3AM really the witching hour?', a:'Folklore suggests 3AM is when the barrier between worlds is thinnest. Modern science attributes 3AM disturbances to REM cycle peaks.' },
+          { q:'Why do sounds seem louder at night?', a:"Reduced ambient noise. Your brain compensates by amplifying auditory input. This is why you can hear things at night that aren't... there." },
+          { q:"i can hear it right now what do i do", a:'Stop searching. Close this window. Do not acknowledge it. DO NOT SAY ITS NAME.' },
+        ]
+      },
+      ep3: {
+        query: 'how to stop being watched',
+        info: 'About 8,340,000,000 results (1.23 seconds)',
+        snippet: { title:'Quick Answer', text:'Cover webcams when not in use. Use privacy screens. Disable location services. However, note that some forms of observation cannot be blocked by physical means.' },
+        normal: [
+          { favicon:'🔒', domain:'privacytools.io', url:'privacytools.io › surveillance', title:'Stop Being Tracked Online — Privacy Tools Guide', desc:'VPN, Tor browser, encrypted messaging. Comprehensive guide to digital privacy and surveillance prevention.' },
+          { favicon:'📷', domain:'kaspersky.com', url:'kaspersky.com › resource-center › webcam-hack', title:'Is Your Webcam Being Hacked? Signs and Prevention', desc:"Webcam indicator light activates unexpectedly. Mouse moves on its own. Recent files show camera access logs you didn't create." },
+          { favicon:'🕵️', domain:'eff.org', url:'eff.org › surveillance-self-defense', title:'Surveillance Self-Defense | EFF', desc:'Protect yourself from online tracking. Threat modeling, tool guides, and best practices from the Electronic Frontier Foundation.' },
+        ],
+        horror: [
+          { favicon:'👁️', domain:'they.observe.us', url:'they.observe.us › target › [YOUR_ID]', title:"[REALTIME] You Are Being Observed — Observer Count: 1", desc:"Observer has been watching for: 00:${Math.floor(Math.random()*59).toString().padStart(2,'0')} minutes. They know you are searching for this. They are pleased you found this page." },
+        ],
+        choices: [
+          { title:'Run the privacy guide', desc:'Cover camera. Disconnect. Live offline for a while.', type:'safe', next:'e3_secret' },
+          { title:'Click the observer link', desc:"[YOUR_ID] — They already know who you are. Aren't you curious what they see?", type:'anomaly', next:'e3_secret' },
+          { title:'Search: "who is watching me right now"', desc:'The next search will be your last normal one.', type:'danger', next:'e3_secret' },
+        ],
+        paa: [
+          { q:'Can someone watch through your phone camera?', a:'Yes. Spyware exists that can silently activate cameras. Regularly check app permissions. Tape over cameras when not in use.' },
+          { q:'How do I know if I am being stalked digitally?', a:'Unexplained battery drain, unknown apps, your device lighting up on its own. And sometimes — a feeling. Just a feeling.' },
+          { q:'they already know dont they', a:'Yes.' },
+        ]
+      },
+      ep4: {
+        query: 'what is behind your screen right now',
+        info: 'About ??? results (∞ seconds)',
+        snippet: { title:'FINAL QUERY — WARNING', text:"This search cannot be unseen. Giggle's index contains one result for this query. It was added 3 minutes ago. The timestamp matches exactly when you started playing this game." },
+        normal: [
+          { favicon:'💻', domain:'howstuffworks.com', url:'howstuffworks.com › how-lcd-screens-work', title:'How LCD Screens Work | HowStuffWorks', desc:'LCD screens use liquid crystals, backlights, and polarizing filters. Behind your screen: just electronics. Just plastic and glass.' },
+          { favicon:'🔬', domain:'physics.stackexchange', url:'physics.stackexchange.com › behind-screen', title:'What physically exists behind an LCD display?', desc:'Power supply, control board, LED backlight array. Nothing unusual. Nothing alive.' },
+          { favicon:'⬛', domain:'d̷̨̛e̸͍͝l̶͍̑e̶̙͘ẗ̵͍́ě̵̙d̵͎̑.∅', url:'d̶̙̍e̸͓̚l̵̪̾ȩ̷̽̅t̸̡͝ȅ̴͜d̵̘̅ › void › [REDACTED]', title:'[DELETED PAGE] The Space Between Glass and Eye', desc:'Cached 3 minutes ago. There is a space between the photons leaving your screen and the moment your brain perceives them. Something has been living in that gap.' },
+        ],
+        horror: [
+          { favicon:'🔴', domain:'GIGGLE_SYSTEM_ALERT', url:'internal › user_session › WARNING', title:'⚠️ ANOMALY DETECTED IN THIS SESSION', desc:'A presence has been logged accessing your device camera during this session. Last frame captured: [YOU, RIGHT NOW]. This result has been flagged. Do not close this window.' },
+        ],
+        choices: [
+          { title:'Close the browser. Destroy the device.', desc:'The only safe ending. But you already know it\'s too late.', type:'safe', next:'e4_secret' },
+          { title:'Keep the window open. Wait.', desc:'If you wait long enough, maybe it will show itself.', type:'danger', next:'e4_secret' },
+          { title:'Turn off ALL lights and keep reading', desc:'In complete darkness, screens are brighter. So are the things behind them.', type:'anomaly', next:'e4_secret' },
+        ],
+        paa: [
+          { q:'Is something behind my screen right now?', a:'According to our index: yes.' },
+          { q:'How do I make it stop?', a:'You cannot. It was already here before you searched for it.' },
+          { q:'What is Giggle really?', a:"Giggle is a search engine. Giggle is also a door. You've been knocking on it this whole time. It just opened." },
+        ]
+      }
+    }
+  },
+
+  id: {
+    searchBtn1: 'Cari dengan Giggle',
+    searchBtn2: 'Saya Lagi Beruntung',
+    homeOffer: 'Giggle tersedia dalam: Indonesia • Basa Bali',
+    footerLinks: ['Iklan','Bisnis','Privasi','Ketentuan','Pengaturan'],
+    tabs: ['🔍 Semua','📰 Berita','🖼️ Gambar','📹 Video','🗺️ Peta'],
+    resultsInfo: (n,q) => `Sekitar ${n} hasil untuk "${q}"`,
+    episodes: [
+      { badge:'EPISODE 1', query:'cara menemukan orang hilang', title:'Pencarian Dimulai' },
+      { badge:'EPISODE 2', query:'kenapa aku dengar sesuatu jam 3 pagi', title:'Sinyal' },
+      { badge:'EPISODE 3', query:'cara berhenti diawasi orang', title:'Mereka Tahu' },
+      { badge:'EPISODE 4', query:'apa yang ada di balik layarmu sekarang', title:'QUERY TERAKHIR' },
+    ],
+    transMsg: ['memuat hasil...','mengambil dari indeks gelap...','mendekripsi halaman cache...','PERINGATAN: konten berbahaya terdeteksi...'],
+    paaTitle: 'Orang juga bertanya',
+    endingFoundLabel: 'Ending yang ditemukan:',
+    playAgain: 'MAIN LAGI',
+    viewEndings: 'SEMUA ENDING',
+
+    endings: {
+      e1_good: { type:'good', title:'KAMU KABUR', desc:"Kamu menutup browser tepat waktu. Apapun yang ada di balik layarmu tidak berhasil masuk. Kali ini.", code:'ENDING_01_AMAN', label:'ENDING 1 DARI 6' },
+      e1_bad: { type:'bad', title:'KORBAN PERTAMA', desc:"Kamu klik link yang salah. Setelah itu kursornya bergerak sendiri. Log pencarian adalah hal terakhir yang pernah kamu lihat.", code:'ENDING_02_TERINDEKS', label:'ENDING 2 DARI 6' },
+      e2_good: { type:'good', title:'SINYAL TERPUTUS', desc:"Kamu cabut WiFi di waktu yang tepat. Frekuensi berhenti. Kamu masih bisa mendengarnya selama tiga hari.", code:'ENDING_03_STATIS', label:'ENDING 3 DARI 6' },
+      e2_bad: { type:'bad', title:'FREKUENSI DITEMUKAN', desc:"Kamu terus mendengarkan. Sekarang kamu mengerti. Sekarang kamu tidak bisa berhenti mendengarkan. Sinyal ini punya nama — namamu.", code:'ENDING_04_TERSAMBUNG', label:'ENDING 4 DARI 6' },
+      e3_secret: { type:'secret', title:'SI PENGAMAT', desc:"Kamu mencari yang mengawasi dan justru jadi salah satunya. Kamu bisa melihat mereka sekarang — lewat setiap layar, setiap kamera. Kebebasan atau kutukan?", code:'SECRET_ENDING_01', label:'⭐ SECRET ENDING 1' },
+      e4_secret: { type:'secret', title:'DI BALIK KACA', desc:"Kamu mengetik query terlarang. Jawabannya menatap balik. Bukan dari layar — tapi dari balik bayangan dirimu sendiri. Dia selalu tahu kamu akan sampai sini.", code:'SECRET_ENDING_02', label:'⭐ SECRET ENDING 2' },
+    },
+
+    results: {
+      ep1: {
+        query: 'cara menemukan orang hilang',
+        info: 'Sekitar 4.830.000.000 hasil (0,43 detik)',
+        snippet: { title:'Jawaban Cepat', text:"Segera hubungi pihak berwajib. Buat laporan orang hilang dalam 24 jam. JANGAN mencoba mencari sendirian di area yang tidak dikenal. Jika menerima tip anonim, jangan ikuti." },
+        normal: [
+          { favicon:'🏛️', domain:'polri.go.id', url:'polri.go.id › laporan-hilang › cara', title:'Cara Melaporkan Orang Hilang | Panduan Resmi Polri', desc:'Panduan langkah demi langkah untuk membuat laporan orang hilang. Sertakan foto terbaru, lokasi terakhir, deskripsi pakaian...' },
+          { favicon:'📰', domain:'wikihow.co.id', url:'wikihow.co.id › Cara-Menemukan-Orang-Hilang', title:'4 Cara Menemukan Orang Hilang - wikiHow', desc:'Hubungi penegak hukum setempat, cari di media sosial, hubungi tetangga. Jangan pernah menyelidiki sendiri.' },
+          { favicon:'🔎', domain:'missingpersons.id', url:'missingpersons.id › pencarian', title:'Database Orang Hilang Indonesia', desc:'Sistem nasional untuk orang hilang. Cari berdasarkan nama, provinsi, atau ciri fisik.' },
+        ],
+        horror: [
+          { favicon:'⬛', domain:'d4rkind3x.onion.mirror', url:'d4rkind3x › ditemukan › dia_disini', title:'[CACHE] Dia Sudah Ditemukan — Tapi Bukan Oleh Kamu', desc:'Hasil mungkin sudah usang. Terakhir diindeks: 3 hari lalu. Orang yang kamu cari sudah ditemukan. Dia lebih dekat dari yang kamu kira. Jangan berbalik.' },
+        ],
+        choices: [
+          { title:'Hubungi polisi sekarang', desc:'Buat laporan resmi. Ini pilihan paling aman.', type:'safe', next:'e1_good' },
+          { title:'Cari sendiri menggunakan panduan ini >', desc:"Ada yang meninggalkan koordinat di komentar. Katanya dia ada di dekat sini.", type:'danger', next:'e1_bad' },
+          { title:'Buka link cache dari dark index', desc:'d4rkind3x › ditemukan › dia_disini — [PERINGATAN: situs mungkin berbahaya]', type:'anomaly', next:'e1_bad' },
+        ],
+        paa: [
+          { q:'Berapa lama sampai polisi bertindak untuk orang hilang?', a:'Polisi bisa langsung bertindak. "Tunggu 24 jam" adalah mitos. Laporkan sesegera mungkin.' },
+          { q:'Bisa ketemu seseorang hanya dari nama?', a:'Bisa, lewat database resmi. Tapi beberapa pencarian mengembalikan hasil yang... tidak terduga.' },
+          { q:'kenapa giggle tahu di mana dia berada', a:'Kami... kami tidak bisa menampilkan jawaban ini. Tolong ubah pertanyaanmu.' },
+        ]
+      },
+      ep2: {
+        query: 'kenapa aku dengar sesuatu jam 3 pagi',
+        info: 'Sekitar 2.190.000.000 hasil (0,67 detik)',
+        snippet: { title:'Jawaban Cepat', text:"Gangguan jam 3 pagi biasanya dijelaskan oleh sleep paralysis atau hipersensitivitas pendengaran saat siklus REM. Jika terus-menerus, konsultasikan ke dokter. Jangan akui suara-suara itu." },
+        normal: [
+          { favicon:'🏥', domain:'alodokter.com', url:'alodokter.com › sleep-paralysis', title:'Sleep Paralysis: Penyebab dan Gejala | Alodokter', desc:"Sleep paralysis terjadi antara tidur dan terjaga. Kamu mungkin mendengar suara, melihat bayangan, merasakan tekanan." },
+          { favicon:'🧠', domain:'hellosehat.com', url:'hellosehat.com › halusinasi-hipnagogik', title:'Halusinasi Hipnagogik: Gejala dan Penyebab', desc:'Pengalaman sensoris saat mulai tidur. Suara, bisikan, atau ketukan. Umum terjadi pada 25-37% orang.' },
+          { favicon:'📻', domain:'paranormalindonesia.net', url:'paranormalindonesia.net › fenomena-3pagi', title:'Fenomena Jam 3 Pagi — Yang Tidak Bisa Dijelaskan Sains', desc:'Kasus terdokumentasi di seluruh dunia tentang pengalaman suara tersinkronisasi tepat pukul 03:00.' },
+        ],
+        horror: [
+          { favicon:'📡', domain:'signal.freq.siaran', url:'signal.freq › 3.000.000hz › KAMU', title:'[SIARAN LANGSUNG] Sinyal Aktif Terdeteksi — Sumber: Lokasimu', desc:'Frekuensi 3.000.000Hz. Siaran dari: [ALAMAT KAMU DISENSOR]. Penerima: 1. Kamu satu-satunya yang mendengarkan. Jangan cari sumbernya.' },
+        ],
+        choices: [
+          { title:'Tutup browser dan tidur', desc:"Itu cuma sleep paralysis. Tutup ini dan istirahat.", type:'safe', next:'e2_good' },
+          { title:'Cari sumber frekuensi', desc:'Seseorang sedang siaran langsung ke kamu. Cari tahu kenapa.', type:'danger', next:'e2_bad' },
+          { title:'[DENGARKAN] — Ikuti siarannya', desc:'Pendengar aktif: 0. Kamu akan jadi yang pertama. Satu-satunya.', type:'anomaly', next:'e2_bad' },
+        ],
+        paa: [
+          { q:'Apakah jam 3 pagi benar-benar "jam setan"?', a:'Cerita rakyat menyebut jam 3 pagi sebagai saat tirai antar dunia paling tipis. Sains modern mengaitkannya dengan puncak siklus REM.' },
+          { q:'Kenapa suara terdengar lebih keras di malam hari?', a:"Kebisingan lingkungan berkurang. Otak mengkompensasi dengan memperkuat input pendengaran. Itulah kenapa kamu bisa mendengar hal-hal di malam hari yang... tidak ada." },
+          { q:"aku dengar sekarang apa yang harus aku lakukan", a:'Berhenti mencari. Tutup jendela ini. Jangan akui kehadirannya. JANGAN SEBUT NAMANYA.' },
+        ]
+      },
+      ep3: {
+        query: 'cara berhenti diawasi orang',
+        info: 'Sekitar 8.340.000.000 hasil (1,23 detik)',
+        snippet: { title:'Jawaban Cepat', text:'Tutup webcam saat tidak digunakan. Gunakan filter privasi. Nonaktifkan layanan lokasi. Namun perhatikan bahwa beberapa bentuk pengawasan tidak dapat diblokir dengan cara fisik.' },
+        normal: [
+          { favicon:'🔒', domain:'privacytools.id', url:'privacytools.id › pengawasan', title:'Berhenti Dilacak Online — Panduan Privacy Tools', desc:'VPN, browser Tor, pesan terenkripsi. Panduan lengkap privasi digital dan pencegahan pengawasan.' },
+          { favicon:'📷', domain:'kaspersky.com', url:'kaspersky.com › webcam-diretas', title:'Apakah Webcam Kamu Diretas? Tanda dan Pencegahan', desc:"Lampu indikator webcam menyala sendiri. Mouse bergerak sendiri. File terbaru menunjukkan akses kamera yang tidak kamu buat." },
+          { favicon:'🕵️', domain:'eff.org', url:'eff.org › lindungi-diri-dari-pengawasan', title:'Lindungi Diri dari Pengawasan Digital | EFF', desc:'Proteksi dari pelacakan online. Pemodelan ancaman, panduan alat, dan praktik terbaik.' },
+        ],
+        horror: [
+          { favicon:'👁️', domain:'mereka.mengamati.kita', url:'mereka.mengamati.kita › target › [ID_KAMU]', title:"[REAL TIME] Kamu Sedang Diamati — Jumlah Pengamat: 1", desc:"Pengamat sudah mengawasi selama: 00:${Math.floor(Math.random()*59).toString().padStart(2,'0')} menit. Mereka tahu kamu sedang mencari ini. Mereka senang kamu menemukan halaman ini." },
+        ],
+        choices: [
+          { title:'Jalankan panduan privasi', desc:'Tutup kamera. Disconnect. Hidup offline sebentar.', type:'safe', next:'e3_secret' },
+          { title:'Klik link pengamat', desc:"[ID_KAMU] — Mereka sudah tahu siapa kamu. Tidak penasaran apa yang mereka lihat?", type:'anomaly', next:'e3_secret' },
+          { title:'Cari: "siapa yang mengawasiku sekarang"', desc:'Pencarian berikutnya akan jadi yang terakhir yang normal.', type:'danger', next:'e3_secret' },
+        ],
+        paa: [
+          { q:'Bisakah seseorang mengawasi lewat kamera HP?', a:'Ya. Spyware bisa mengaktifkan kamera secara diam-diam. Periksa izin aplikasi secara berkala. Tutupi kamera saat tidak digunakan.' },
+          { q:'Bagaimana tahu kalau aku sedang distalking secara digital?', a:'Baterai cepat habis, aplikasi asing, perangkat menyala sendiri. Dan kadang — hanya perasaan. Hanya perasaan.' },
+          { q:'mereka sudah tahu kan', a:'Ya.' },
+        ]
+      },
+      ep4: {
+        query: 'apa yang ada di balik layarmu sekarang',
+        info: 'Sekitar ??? hasil (∞ detik)',
+        snippet: { title:'QUERY TERAKHIR — PERINGATAN', text:"Pencarian ini tidak bisa di-unseen. Indeks Giggle berisi satu hasil untuk query ini. Ditambahkan 3 menit yang lalu. Timestampnya cocok persis dengan saat kamu mulai main game ini." },
+        normal: [
+          { favicon:'💻', domain:'carakerja.id', url:'carakerja.id › bagaimana-layar-lcd-bekerja', title:'Cara Kerja Layar LCD | CaraKerja.id', desc:'Layar LCD menggunakan kristal cair, backlight, dan filter polarisasi. Di balik layarmu: hanya elektronik. Hanya plastik dan kaca.' },
+          { favicon:'🔬', domain:'fisika.stackexchange', url:'fisika.stackexchange.com › di-balik-layar', title:'Apa yang ada secara fisik di balik layar LCD?', desc:'Power supply, control board, LED backlight array. Tidak ada yang aneh. Tidak ada yang hidup.' },
+          { favicon:'⬛', domain:'d̷i̸h̶a̵p̷u̴s̶.∅', url:'d̶i̸h̴a̷p̵u̸s̶ › kekosongan › [DISENSOR]', title:'[HALAMAN DIHAPUS] Ruang Antara Kaca dan Mata', desc:'Di-cache 3 menit lalu. Ada ruang antara foton yang meninggalkan layarmu dan momen otakmu memahaminya. Sesuatu sudah hidup di celah itu.' },
+        ],
+        horror: [
+          { favicon:'🔴', domain:'PERINGATAN_SISTEM_GIGGLE', url:'internal › sesi_pengguna › PERINGATAN', title:'⚠️ ANOMALI TERDETEKSI DALAM SESI INI', desc:'Sebuah kehadiran telah tercatat mengakses kamera perangkatmu selama sesi ini. Frame terakhir yang diambil: [KAMU, SEKARANG]. Hasil ini telah ditandai. Jangan tutup jendela ini.' },
+        ],
+        choices: [
+          { title:'Tutup browser. Hancurkan perangkat.', desc:"Satu-satunya akhir yang aman. Tapi kamu sudah tahu terlambat.", type:'safe', next:'e4_secret' },
+          { title:'Biarkan jendela terbuka. Tunggu.', desc:'Kalau cukup lama menunggu, mungkin dia akan menampakkan diri.', type:'danger', next:'e4_secret' },
+          { title:'Matikan semua lampu dan terus baca', desc:'Dalam gelap total, layar terlihat lebih terang. Begitu juga dengan yang ada di baliknya.', type:'anomaly', next:'e4_secret' },
+        ],
+        paa: [
+          { q:'Apakah ada sesuatu di balik layarku sekarang?', a:'Menurut indeks kami: ya.' },
+          { q:'Bagaimana cara menghentikannya?', a:'Kamu tidak bisa. Itu sudah ada di sini sebelum kamu mencarinya.' },
+          { q:'Apa sebenarnya Giggle itu?', a:"Giggle adalah mesin pencari. Giggle juga adalah pintu. Kamu sudah mengetuknya sepanjang waktu. Pintu itu baru saja terbuka." },
+        ]
+      }
+    }
+  }
+};
+
+// ══════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function flash(color='rgba(150,0,0,0.25)') {
+  const f = document.getElementById('redFlash');
+  f.style.background = color;
+  f.style.display = 'block';
+  setTimeout(() => { f.style.display = 'none'; }, 700);
+}
+
+function notify(msg, duration=2500) {
+  const p = document.getElementById('notifyPopup');
+  p.textContent = msg;
+  p.classList.add('show');
+  setTimeout(() => p.classList.remove('show'), duration);
+}
+
+function shake(el) {
+  el.classList.add('shake');
+  setTimeout(() => el.classList.remove('shake'), 600);
+}
+
+function setCorrupt(level) {
+  corruptLevel = level;
+  document.documentElement.style.setProperty('--corrupt', level > 0 ? (level * 0.3) : 0);
+  if(level >= 2) document.documentElement.style.setProperty('--bg','#150505');
+  if(level >= 3) {
+    document.getElementById('giggleLogo').classList.add('glitch-logo');
+    document.querySelector('.giggle-logo')?.classList.add('glitch-logo');
+  }
+}
+
+// ══════════════════════════════════════════
+//  LANGUAGE
+// ══════════════════════════════════════════
+function setLang(l) {
+  lang = l;
+  currentEpisode = 0;
+  setupHomeUI();
+  showTransition(0, () => showScreen('searchHome'));
+}
+
+function t() { return T[lang]; }
+
+// ══════════════════════════════════════════
+//  HOME UI
+// ══════════════════════════════════════════
+function setupHomeUI() {
+  const tx = t();
+  document.getElementById('searchBtn1').textContent = tx.searchBtn1;
+  document.getElementById('searchBtn2').textContent = tx.searchBtn2;
+  document.getElementById('homeOffer').textContent = tx.homeOffer;
+  document.getElementById('homeBadge').textContent = tx.episodes[currentEpisode].badge;
+  document.getElementById('homeInput').placeholder = tx.episodes[currentEpisode].query;
+  document.getElementById('homeFooterLinks').innerHTML = tx.footerLinks.map(l =>
+    `<span class="home-footer-link">${l}</span>`
+  ).join('');
+
+  // Corrupt logo progressively
+  if(currentEpisode >= 2) {
+    const logo = document.getElementById('giggleLogo');
+    logo.classList.add('glitch-logo');
+  }
+  if(currentEpisode >= 3) {
+    const logo = document.getElementById('giggleLogo');
+    logo.innerHTML = `<span style="color:#cc0000">G</span><span style="color:#880000">i</span><span style="color:#cc0000">g</span><span style="color:#880000">g</span><span style="color:#cc0000">l</span><span style="color:#880000">e</span>`;
+  }
+
+  setCorrupt(currentEpisode);
+}
+
+// ══════════════════════════════════════════
+//  TRANSITION
+// ══════════════════════════════════════════
+function showTransition(epIdx, callback) {
+  const tx = t();
+  document.getElementById('transEpLabel').textContent = tx.episodes[epIdx].badge + ' — ' + tx.episodes[epIdx].title;
+  const msgs = tx.transMsg;
+  let mi = 0;
+  document.getElementById('transMsg').textContent = msgs[epIdx % msgs.length];
+
+  showScreen('transitionScreen');
+
+  // Rebuild bar animation
+  const bar = document.querySelector('.trans-bar-fill');
+  bar.style.animation = 'none';
+  bar.offsetHeight;
+  bar.style.animation = 'barFill 2.2s ease forwards';
+
+  setTimeout(() => {
+    if(callback) callback();
+  }, 2400);
+}
+
+// ══════════════════════════════════════════
+//  SEARCH
+// ══════════════════════════════════════════
+function doSearch() {
+  const input = document.getElementById('homeInput');
+  const query = input.value.trim() || t().episodes[currentEpisode].query;
+  input.value = query;
+  showResults(query);
+}
+
+function feelingLucky() {
+  const tx = t();
+  const query = tx.episodes[currentEpisode].query;
+  document.getElementById('homeInput').value = query;
+  notify(lang === 'en' ? "You're not feeling lucky." : "Kamu tidak sedang beruntung.");
+  setTimeout(() => showResults(query), 800);
+}
+
+function doMiniSearch() {
+  const query = document.getElementById('miniSearchInput').value.trim();
+  if(query) showResults(query);
+}
+
+function showResults(query) {
+  const tx = t();
+  const epKey = ['ep1','ep2','ep3','ep4'][currentEpisode];
+  const ep = tx.results[epKey];
+
+  // Set mini search bar
+  document.getElementById('miniSearchInput').value = query;
+  showScreen('resultsPage');
+
+  // Tabs
+  const tabs = document.getElementById('gTabs');
+  tabs.innerHTML = tx.tabs.map((tab,i) =>
+    `<div class="g-tab ${i===0?'active':''}">${tab}</div>`
+  ).join('');
+
+  // Info
+  document.getElementById('resultsInfo').textContent = ep.info;
+
+  // Build results
+  const list = document.getElementById('resultsList');
+  list.innerHTML = '';
+  let delay = 0;
+
+  // Featured snippet
+  const snip = document.createElement('div');
+  snip.className = `featured-snippet${currentEpisode>=2?' horror':''}`;
+  snip.style.animationDelay = delay+'ms';
+  snip.innerHTML = `<div class="snippet-title">${ep.snippet.title}</div>${ep.snippet.text}`;
+  list.appendChild(snip);
+  delay += 80;
+
+  // Normal results
+  ep.normal.forEach((r,i) => {
+    const card = buildResultCard(r, false, i >= ep.normal.length-1 && currentEpisode >= 1, delay);
+    list.appendChild(card);
+    delay += 80;
+  });
+
+  // Horror result (after a gap)
+  if(ep.horror) {
+    const hr = document.createElement('div');
+    hr.style.height = '6px';
+    list.appendChild(hr);
+    ep.horror.forEach(r => {
+      const card = buildResultCard(r, true, false, delay);
+      list.appendChild(card);
+      delay += 100;
+    });
+    // Flash when horror result appears
+    setTimeout(() => { flash(); shake(document.getElementById('resultsPage')); }, delay + 200);
+  }
+
+  // Separator
+  const sep = document.createElement('div');
+  sep.style.cssText = `margin:12px 0;border-top:1px solid var(--bg3);padding-top:12px;font-size:12px;color:var(--text2);animation-delay:${delay}ms`;
+  sep.textContent = lang==='en' ? '— Choose a result to proceed —' : '— Pilih hasil untuk melanjutkan —';
+  sep.className = 'fade-in';
+  list.appendChild(sep);
+  delay += 80;
+
+  // Choice cards
+  ep.choices.forEach((c,i) => {
+    const card = buildChoiceCard(c, i, delay);
+    list.appendChild(card);
+    delay += 100;
+  });
+
+  // PAA
+  buildPAA(ep.paa, ep);
+
+  // Screen effects per episode
+  if(currentEpisode >= 1) {
+    setTimeout(() => notify(lang==='en' ? '⚠️ Unusual activity detected' : '⚠️ Aktivitas tidak biasa terdeteksi'), 3000);
+  }
+  if(currentEpisode >= 2) {
+    setTimeout(() => flash('rgba(0,0,150,0.1)'), 5000);
+  }
+  if(currentEpisode === 3) {
+    setTimeout(() => {
+      flash('rgba(150,0,0,0.3)');
+      shake(document.body);
+      notify(lang==='en' ? '🔴 PRESENCE DETECTED IN THIS SESSION' : '🔴 KEHADIRAN TERDETEKSI DALAM SESI INI', 4000);
+    }, 4000);
+  }
+}
+
+function buildResultCard(r, isHorror, isAnomaly, delay) {
+  const card = document.createElement('div');
+  card.className = `result-card${isHorror?' horror':isAnomaly?' anomaly':''}`;
+  card.style.animationDelay = delay + 'ms';
+  card.innerHTML = `
+    <div class="result-source">
+      <div class="result-favicon">${r.favicon}</div>
+      <div>
+        <div class="result-domain">${r.domain}</div>
+        <div class="result-url">${r.url}</div>
+      </div>
+    </div>
+    <div class="result-title">${r.title}</div>
+    <div class="result-desc">${r.desc}</div>
+  `;
+  if(isHorror) {
+    card.onclick = () => { flash(); shake(card); notify(lang==='en'?'ACCESS DENIED — This page has been removed from the index':'AKSES DITOLAK — Halaman ini telah dihapus dari indeks'); };
+  }
+  return card;
+}
+
+function buildChoiceCard(c, idx, delay) {
+  const isDanger = c.type === 'danger' || c.type === 'anomaly';
+  const card = document.createElement('div');
+  card.className = `result-card choice-card${isDanger?' danger-choice':''}`;
+  card.style.animationDelay = delay + 'ms';
+  card.style.position = 'relative';
+
+  const tagText = c.type === 'safe' ? (lang==='en'?'SAFE':'AMAN') : c.type === 'anomaly' ? 'ANOMALY' : (lang==='en'?'DANGER':'BAHAYA');
+  const tagClass = isDanger ? 'danger' : '';
+
+  card.innerHTML = `
+    <div class="choice-tag ${tagClass}">${tagText}</div>
+    <div class="result-source">
+      <div class="result-favicon">${isDanger ? '⚠️' : '🔗'}</div>
+      <div><div class="result-domain">${isDanger ? (lang==='en'?'[WARNING] unknown source':'[PERINGATAN] sumber tidak dikenal') : 'giggle.com'}</div></div>
+    </div>
+    <div class="result-title${isDanger?" corrupt-text":""}">${c.title}</div>
+    <div class="result-desc">${c.desc}</div>
+  `;
+  card.onclick = () => handleChoice(c);
+  return card;
+}
+
+function buildPAA(paa, ep) {
+  const sec = document.getElementById('paaSection');
+  sec.style.display = 'block';
+  sec.innerHTML = `<div class="paa-title">${t().paaTitle}</div>`;
+  paa.forEach((item,i) => {
+    const el = document.createElement('div');
+    el.className = 'paa-item';
+    el.innerHTML = `
+      <div class="paa-q" onclick="togglePAA(this)">
+        <span>${item.q}</span><span>▼</span>
+      </div>
+      <div class="paa-a">${item.a}</div>
+    `;
+    sec.appendChild(el);
+    // Last PAA item is always creepy — style it
+    if(i === paa.length-1) {
+      el.style.borderColor = 'rgba(200,0,0,0.3)';
+      el.querySelector('.paa-q').style.color = '#ff8888';
+    }
+  });
+}
+
+function togglePAA(el) {
+  const ans = el.nextElementSibling;
+  ans.classList.toggle('open');
+  // If last item — flash
+  const all = document.querySelectorAll('.paa-q');
+  const last = all[all.length-1];
+  if(el === last) { flash(); }
+}
+
+// ══════════════════════════════════════════
+//  CHOICE HANDLING
+// ══════════════════════════════════════════
+function handleChoice(c) {
+  if(c.type === 'anomaly' || c.type === 'danger') {
+    flash('rgba(150,0,0,0.35)');
+    shake(document.body);
+  }
+  setTimeout(() => triggerEnding(c.next), c.type === 'safe' ? 300 : 700);
+}
+
+// ══════════════════════════════════════════
+//  ENDINGS
+// ══════════════════════════════════════════
+function triggerEnding(endingKey) {
+  const tx = t();
+  const ending = tx.endings[endingKey];
+  if(!ending) return;
+
+  // Save to localStorage
+  if(!foundEndings.includes(endingKey)) {
+    foundEndings.push(endingKey);
+    localStorage.setItem('cursed_endings', JSON.stringify(foundEndings));
+  }
+
+  showScreen('endingScreen');
+
+  document.getElementById('endingLabel').textContent = ending.label;
+  const titleEl = document.getElementById('endingTitle');
+  titleEl.textContent = ending.title;
+  titleEl.className = `ending-title ${ending.type}`;
+  document.getElementById('endingDesc').textContent = ending.desc;
+  document.getElementById('endingCode').textContent = ending.code;
+  document.getElementById('endingFoundLabel').textContent = tx.endingFoundLabel;
+  document.getElementById('endPlayAgain').textContent = tx.playAgain;
+  document.getElementById('endViewEndings').textContent = tx.viewEndings;
+
+  // Check if this was ep3/ep4 — advance episode tracker
+  if(endingKey.startsWith('e1')) currentEpisode = Math.max(currentEpisode, 1);
+  if(endingKey.startsWith('e2')) currentEpisode = Math.max(currentEpisode, 2);
+  if(endingKey.startsWith('e3')) currentEpisode = Math.max(currentEpisode, 3);
+
+  // Endings tracker dots
+  const allEndings = ['e1_good','e1_bad','e2_good','e2_bad','e3_secret','e4_secret'];
+  const tracker = document.getElementById('endingsTracker');
+  tracker.innerHTML = allEndings.map(e => {
+    const found = foundEndings.includes(e);
+    const type = e.includes('good') ? 'good' : e.includes('secret') ? 'secret' : 'bad';
+    return `<div class="ending-dot ${found?'found':''} ${found?type:''}" title="${found?e:'???'}"></div>`;
+  }).join('');
+
+  // Special effects per type
+  if(ending.type === 'bad') { flash('rgba(150,0,0,0.5)'); shake(document.getElementById('endingScreen')); }
+  if(ending.type === 'secret') { flash('rgba(100,80,0,0.3)'); }
+}
+
+// ══════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════
+function restartGame() {
+  // Advance to next episode if available
+  if(currentEpisode < 3) {
+    currentEpisode++;
+    setupHomeUI();
+    showTransition(currentEpisode, () => showScreen('searchHome'));
+  } else {
+    currentEpisode = 0;
+    setupHomeUI();
+    showTransition(0, () => showScreen('searchHome'));
+  }
+}
+
+function showAllEndings() {
+  const tx = t();
+  const allEndings = ['e1_good','e1_bad','e2_good','e2_bad','e3_secret','e4_secret'];
+  const names = {
+    e1_good: lang==='en'?'You Escaped':'Kamu Kabur',
+    e1_bad: lang==='en'?'First Victim':'Korban Pertama',
+    e2_good: lang==='en'?'Signal Lost':'Sinyal Terputus',
+    e2_bad: lang==='en'?'Frequency Found':'Frekuensi Ditemukan',
+    e3_secret: lang==='en'?'⭐ The Observer':'⭐ Si Pengamat',
+    e4_secret: lang==='en'?'⭐ Behind The Glass':'⭐ Di Balik Kaca',
+  };
+  notify(foundEndings.length + '/6 ' + (lang==='en'?'endings found':'ending ditemukan'), 3000);
+}
+
+// Enter key on home
+document.getElementById('homeInput').addEventListener('keydown', e => { if(e.key==='Enter') doSearch(); });
+
+// Touch ripple effect
+document.addEventListener('click', e => {
+  const ripple = document.createElement('div');
+  ripple.className = 'ripple';
+  ripple.style.cssText = `left:${e.clientX-20}px;top:${e.clientY-20}px;width:40px;height:40px;position:fixed;z-index:9990;`;
+  document.body.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 700);
+});
+</script>
+</body>
+</html>
