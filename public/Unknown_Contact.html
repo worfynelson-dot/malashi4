@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>UNKNOWN_CONTACT</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Creepster&display=swap');
+
+  :root {
+    --bg-dark: #0a0a0a;
+    --bg-chat: #111111;
+    --bg-pattern: #141414;
+    --bubble-them: #1e1e1e;
+    --bubble-us: #1a3a2a;
+    --text-main: #e8e8e8;
+    --text-dim: #5a5a5a;
+    --text-time: #4a4a4a;
+    --accent-green: #25d366;
+    --accent-red: #ff2222;
+    --accent-blood: #8b0000;
+    --header-bg: #161616;
+    --input-bg: #1a1a1a;
+    --anomaly-color: #ff0000;
+    --safe-color: #25d366;
+    --warning: #ff6600;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Share Tech Mono', monospace;
+    background: var(--bg-dark);
+    color: var(--text-main);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* GLITCH OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,0,0.01) 2px, rgba(0,255,0,0.01) 4px);
+    pointer-events: none;
+    z-index: 9999;
+    animation: scanline 8s linear infinite;
+  }
+
+  @keyframes scanline {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 100vh; }
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--header-bg);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #1a1a1a;
+    z-index: 100;
+    flex-shrink: 0;
+  }
+
+  .header-back {
+    color: var(--accent-green);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  .header-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #1a1a1a;
+    border: 2px solid var(--accent-blood);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .header-avatar.glitch-avatar {
+    animation: avatarGlitch 0.3s steps(2) infinite;
+  }
+
+  @keyframes avatarGlitch {
+    0% { filter: hue-rotate(0deg); }
+    50% { filter: hue-rotate(180deg) saturate(3); }
+    100% { filter: hue-rotate(0deg); }
+  }
+
+  .header-info { flex: 1; }
+  .header-name { font-size: 15px; font-weight: bold; color: var(--text-main); letter-spacing: 1px; }
+  .header-status { font-size: 11px; color: var(--text-dim); }
+  .header-status.typing { color: var(--accent-green); animation: blink 1s infinite; }
+  .header-status.danger { color: var(--accent-red); animation: blink 0.3s infinite; }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  .header-icons { display: flex; gap: 14px; color: var(--text-dim); font-size: 18px; }
+
+  /* HP BAR */
+  .hp-bar-container {
+    background: #0d0d0d;
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #1a1a1a;
+    flex-shrink: 0;
+  }
+
+  .hp-label { font-size: 10px; color: var(--text-dim); white-space: nowrap; }
+  .hp-bar {
+    flex: 1;
+    height: 6px;
+    background: #2a0000;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .hp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-blood), #ff4444);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+    width: 100%;
+  }
+  .hp-value { font-size: 10px; color: #ff4444; white-space: nowrap; }
+  .anomaly-counter { font-size: 10px; color: var(--warning); margin-left: 8px; white-space: nowrap; }
+
+  /* CHAT AREA */
+  .chat-bg {
+    flex: 1;
+    overflow-y: auto;
+    position: relative;
+    padding: 8px 10px 12px;
+    scroll-behavior: smooth;
+  }
+
+  .chat-bg::-webkit-scrollbar { width: 3px; }
+  .chat-bg::-webkit-scrollbar-track { background: transparent; }
+  .chat-bg::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }
+
+  /* WA-style background pattern */
+  .chat-bg::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Ccircle cx='20' cy='20' r='8' fill='none' stroke='%23ffffff08' stroke-width='1'/%3E%3Crect x='50' y='50' width='15' height='15' fill='none' stroke='%23ffffff06' stroke-width='1'/%3E%3Cpath d='M100 80 L120 100 L100 120 L80 100Z' fill='none' stroke='%23ffffff05' stroke-width='1'/%3E%3Ccircle cx='160' cy='40' r='12' fill='none' stroke='%23ffffff07' stroke-width='1'/%3E%3Crect x='140' y='140' width='20' height='20' rx='3' fill='none' stroke='%23ffffff05' stroke-width='1'/%3E%3Cpath d='M40 150 Q60 130 80 150' fill='none' stroke='%23ffffff06' stroke-width='1'/%3E%3C/svg%3E");
+    background-size: 200px 200px;
+    opacity: 1;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .date-divider {
+    text-align: center;
+    margin: 10px 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .date-divider span {
+    background: rgba(0,0,0,0.6);
+    color: var(--text-dim);
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 8px;
+    border: 1px solid #222;
+  }
+
+  .enc-notice {
+    text-align: center;
+    margin: 6px 0 12px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .enc-notice p {
+    background: rgba(20,10,0,0.7);
+    color: #8a7040;
+    font-size: 10px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid #3a2800;
+    display: inline-block;
+    line-height: 1.5;
+  }
+
+  /* MESSAGES */
+  .msg-row {
+    display: flex;
+    margin: 2px 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .msg-row.them { justify-content: flex-start; }
+  .msg-row.us { justify-content: flex-end; }
+
+  .bubble {
+    max-width: 75%;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    position: relative;
+    animation: bubbleIn 0.2s ease;
+    word-break: break-word;
+  }
+
+  @keyframes bubbleIn {
+    from { opacity: 0; transform: scale(0.9) translateY(6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .bubble.them {
+    background: var(--bubble-them);
+    border-radius: 0 8px 8px 8px;
+    border: 1px solid #2a2a2a;
+  }
+
+  .bubble.us {
+    background: var(--bubble-us);
+    border-radius: 8px 8px 0 8px;
+    border: 1px solid #1a3a2a;
+  }
+
+  .bubble.anomaly {
+    background: rgba(80,0,0,0.4) !important;
+    border: 1px solid var(--accent-blood) !important;
+    animation: anomalyPulse 0.5s ease, bubbleIn 0.2s ease !important;
+    color: #ff8888;
+  }
+
+  @keyframes anomalyPulse {
+    0% { box-shadow: 0 0 0 0 rgba(255,0,0,0.6); }
+    50% { box-shadow: 0 0 20px 8px rgba(255,0,0,0.3); }
+    100% { box-shadow: 0 0 0 0 rgba(255,0,0,0); }
+  }
+
+  .bubble .sender-name {
+    font-size: 10px;
+    color: var(--accent-blood);
+    font-weight: bold;
+    margin-bottom: 2px;
+    letter-spacing: 1px;
+  }
+
+  .bubble .msg-time {
+    font-size: 10px;
+    color: var(--text-time);
+    text-align: right;
+    margin-top: 2px;
+  }
+
+  .bubble.us .msg-time::after {
+    content: ' ✓✓';
+    color: #25d366;
+  }
+
+  /* IMAGE MESSAGE */
+  .msg-img {
+    width: 200px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 6px;
+    display: block;
+    cursor: pointer;
+    filter: brightness(0.7) contrast(1.2);
+    transition: filter 0.3s;
+  }
+
+  .msg-img:hover { filter: brightness(0.9) contrast(1); }
+
+  /* ANOMALY WARNING */
+  .anomaly-warning {
+    position: fixed;
+    inset: 0;
+    background: rgba(150,0,0,0.15);
+    border: 3px solid var(--accent-blood);
+    pointer-events: none;
+    z-index: 9998;
+    animation: warningFlash 0.5s ease;
+    display: none;
+  }
+
+  @keyframes warningFlash {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* CHOICE BUTTONS */
+  .choice-area {
+    padding: 6px 10px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    background: #0d0d0d;
+    border-top: 1px solid #1a1a1a;
+    flex-shrink: 0;
+  }
+
+  .choice-btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 8px 10px;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 20px;
+    color: var(--text-main);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    line-height: 1.3;
+  }
+
+  .choice-btn:hover { background: #252525; border-color: #3a3a3a; }
+  .choice-btn.anomaly-btn { border-color: var(--accent-blood); color: #ff4444; }
+  .choice-btn.safe-btn { border-color: #1a3a1a; color: var(--accent-green); }
+
+  /* INPUT AREA */
+  .input-area {
+    background: var(--header-bg);
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-top: 1px solid #1a1a1a;
+    flex-shrink: 0;
+  }
+
+  .emoji-btn {
+    color: var(--text-dim);
+    font-size: 22px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .text-input {
+    flex: 1;
+    background: var(--input-bg);
+    border: 1px solid #2a2a2a;
+    border-radius: 20px;
+    padding: 9px 14px;
+    color: var(--text-main);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    caret-color: var(--accent-green);
+  }
+
+  .text-input::placeholder { color: #3a3a3a; }
+  .text-input:focus { border-color: #3a3a3a; }
+
+  .attach-btn { color: var(--text-dim); font-size: 20px; cursor: pointer; flex-shrink: 0; }
+
+  .send-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+
+  .send-btn:hover { background: #1daf55; }
+  .send-btn svg { width: 20px; height: 20px; fill: white; }
+
+  /* GAME OVER SCREEN */
+  .gameover-screen {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.97);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    display: none;
+    gap: 16px;
+    text-align: center;
+    padding: 30px;
+  }
+
+  .gameover-title {
+    font-family: 'Creepster', cursive;
+    font-size: 52px;
+    color: var(--accent-blood);
+    text-shadow: 0 0 30px rgba(255,0,0,0.5);
+    animation: glitchText 2s infinite;
+  }
+
+  @keyframes glitchText {
+    0%,100% { text-shadow: 0 0 30px rgba(255,0,0,0.5); transform: skew(0deg); }
+    92% { text-shadow: 0 0 30px rgba(255,0,0,0.5); transform: skew(0deg); }
+    93% { text-shadow: -4px 0 cyan, 4px 0 red; transform: skew(-3deg); }
+    94% { text-shadow: 4px 0 cyan, -4px 0 red; transform: skew(3deg); }
+    95% { text-shadow: 0 0 30px rgba(255,0,0,0.5); transform: skew(0deg); }
+  }
+
+  .gameover-sub { color: #666; font-size: 13px; line-height: 1.7; max-width: 280px; }
+  .gameover-reason { color: #ff4444; font-size: 12px; margin-top: 4px; }
+
+  .restart-btn {
+    margin-top: 16px;
+    padding: 12px 32px;
+    background: transparent;
+    border: 1px solid var(--accent-blood);
+    color: #ff4444;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+  }
+
+  .restart-btn:hover { background: rgba(139,0,0,0.2); }
+
+  /* WIN SCREEN */
+  .win-screen {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,10,0,0.97);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    gap: 16px;
+    text-align: center;
+    padding: 30px;
+  }
+
+  .win-title {
+    font-family: 'Creepster', cursive;
+    font-size: 44px;
+    color: var(--accent-green);
+    text-shadow: 0 0 30px rgba(37,211,102,0.5);
+  }
+
+  .win-sub { color: #5a8a5a; font-size: 12px; line-height: 1.7; max-width: 280px; }
+
+  /* NOTIFICATION SHAKE */
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    10%,30%,50%,70%,90% { transform: translateX(-4px); }
+    20%,40%,60%,80% { transform: translateX(4px); }
+  }
+
+  .shake { animation: shake 0.5s ease; }
+
+  /* IMAGE FULLSCREEN */
+  .img-fullscreen {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.95);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    cursor: pointer;
+  }
+
+  .img-fullscreen img {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border: 1px solid #2a2a2a;
+    filter: brightness(0.85) contrast(1.1);
+  }
+
+  /* TYPING INDICATOR */
+  .typing-bubble {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 12px;
+    background: var(--bubble-them);
+    border: 1px solid #2a2a2a;
+    border-radius: 0 8px 8px 8px;
+    display: inline-flex;
+  }
+
+  .typing-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #555;
+    animation: typingBounce 1.2s infinite;
+  }
+
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typingBounce {
+    0%,80%,100% { transform: scale(1); opacity: 0.5; }
+    40% { transform: scale(1.3); opacity: 1; }
+  }
+
+  /* DISTORTION */
+  @keyframes distort {
+    0%,100% { filter: none; }
+    50% { filter: brightness(1.5) hue-rotate(30deg) saturate(3); }
+  }
+
+  .distort-anim { animation: distort 0.2s steps(2) 3; }
+</style>
+</head>
+<body>
+
+<!-- GLITCH OVERLAY -->
+<div class="anomaly-warning" id="warningOverlay"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-back">←</div>
+  <div class="header-avatar" id="headerAvatar">👤</div>
+  <div class="header-info">
+    <div class="header-name" id="contactName">UNKNOWN</div>
+    <div class="header-status" id="contactStatus">online</div>
+  </div>
+  <div class="header-icons">
+    <span>📞</span>
+    <span>⋮</span>
+  </div>
+</div>
+
+<!-- HP BAR -->
+<div class="hp-bar-container">
+  <span class="hp-label">❤️ HP</span>
+  <div class="hp-bar"><div class="hp-fill" id="hpFill"></div></div>
+  <span class="hp-value" id="hpValue">100</span>
+  <span class="anomaly-counter" id="anomalyCounter">⚠️ 0 anomalies</span>
+</div>
+
+<!-- CHAT -->
+<div class="chat-bg" id="chatArea">
+  <div class="date-divider"><span id="dateLabel">December 8, 2025</span></div>
+  <div class="enc-notice">
+    <p>🔒 Messages and calls are end-to-end encrypted.<br>Only people in this chat can read, listen to, or share them.</p>
+  </div>
+</div>
+
+<!-- CHOICE AREA -->
+<div class="choice-area" id="choiceArea" style="display:none;"></div>
+
+<!-- INPUT -->
+<div class="input-area">
+  <div class="emoji-btn">😊</div>
+  <input type="text" class="text-input" id="textInput" placeholder="Message" readonly>
+  <div class="attach-btn">📎</div>
+  <div class="attach-btn">📷</div>
+  <button class="send-btn" id="sendBtn" disabled>
+    <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+  </button>
+</div>
+
+<!-- IMG FULLSCREEN -->
+<div class="img-fullscreen" id="imgFullscreen" onclick="this.style.display='none'">
+  <img id="fullscreenImg" src="" alt="">
+</div>
+
+<!-- GAMEOVER -->
+<div class="gameover-screen" id="gameoverScreen">
+  <div class="gameover-title">YOU DIED</div>
+  <div class="gameover-sub">Kamu tidak berhasil bertahan dari ancaman yang datang lewat chat ini.</div>
+  <div class="gameover-reason" id="deathReason"></div>
+  <button class="restart-btn" onclick="startGame()">[ RESTART ]</button>
+</div>
+
+<!-- WIN -->
+<div class="win-screen" id="winScreen">
+  <div class="win-title">SURVIVED</div>
+  <div class="win-sub" id="winMsg">Kamu berhasil bertahan... untuk malam ini.<br>Tapi apakah mereka akan kembali?</div>
+  <button class="restart-btn" style="border-color:#25d366;color:#25d366;" onclick="startGame()">[ MAIN LAGI ]</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════
+let hp = 100;
+let anomalyCount = 0;
+let missedAnomalies = 0;
+let gamePhase = 0;
+let imageUrl = null; // Will be set when user provides Vercel Blob URL
+
+const TOTAL_ANOMALIES_LIMIT = 3; // 3 missed anomalies = dead
+
+// ═══════════════════════════════════════
+//  STORY SCRIPT
+// ═══════════════════════════════════════
+// Each entry: { type:'them'|'us'|'date'|'typing'|'image'|'choice', ... }
+// choice: { text, choices: [{label, reply, isAnomaly, damage}] }
+
+const story = [
+  { type:'typing', delay:1500 },
+  { type:'them', text:'halo', time:'17:33', delay:0 },
+  { type:'typing', delay:2000 },
+  { type:'them', text:'masih inget gw kan', time:'17:33', delay:0 },
+  {
+    type:'choice',
+    choices: [
+      { label:'Siapa lo?', reply:'Gak tau lo siapa', isAnomaly:false, safe:true },
+      { label:'Iya, kenapa?', reply:'Iya, ada apa?', isAnomaly:false, safe:true },
+      { label:'❌ [JANGAN BALAS]', reply:'', isAnomaly:true, damage:0, skip:true },
+    ]
+  },
+  { type:'typing', delay:3000 },
+  { type:'them', text:'gw tau lo lagi sendirian malam ini', time:'17:34', delay:0 },
+  { type:'them', text:'jangan buka pintu belakang', time:'17:34', delay:800 },
+  {
+    type:'choice',
+    choices: [
+      { label:'Gmn lo tau gw sendirian?!', reply:'Gimana lo tau gw sendirian?!', isAnomaly:false, safe:true },
+      { label:'Haha lucu', reply:'haha bercanda kan?', isAnomaly:false, safe:true },
+      { label:'⚠️ "ok thanks" [ANOMALY - jangan!]', reply:'ok thanks', isAnomaly:true, damage:30 },
+    ]
+  },
+  { type:'typing', delay:2500 },
+  { type:'them', text:'ada yang udah masuk dari tadi', time:'17:36', delay:0 },
+  { type:'image', src:'https://i.imgur.com/placeholder.jpg', isHorror:true, caption:'foto dikirim', time:'17:36', delay:800 },
+  // Foto horror — ganti dengan Vercel Blob URL lo nanti!
+  {
+    type:'choice',
+    choices:[
+      { label:'Foto apaan ini?!', reply:'ini foto apaan sih?! lo kirim dari mana?', isAnomaly:false, safe:true },
+      { label:'Coba zoom foto itu', reply:'tunggu gw lihat dulu...', isAnomaly:false, safe:true },
+      { label:'⚠️ "bagus fotonya" [ANOMALY]', reply:'bagus fotonya', isAnomaly:true, damage:35 },
+    ]
+  },
+  { type:'typing', delay:3500 },
+  { type:'them', text:'d̷i̴a̵ ̶s̷u̷d̷a̷h̷ ̶a̸d̷a̴ ̷d̷i̶ ̵b̴e̴l̷a̶k̶a̵n̸g̵ ̶l̶o̵', time:'17:38', delay:0, anomalyText:true },
+  { type:'them', text:'jangan noleh', time:'17:38', delay:1000 },
+  {
+    type:'choice',
+    choices:[
+      { label:'GW MAU NOLEH!', reply:'GW MAU NOLEH!', isAnomaly:false, safe:true },
+      { label:'ok gw ga noleh...', reply:'oke... gw ga noleh...', isAnomaly:false, safe:true },
+      { label:'⚠️ [Balas "hehehehe"] [ANOMALY]', reply:'hehehehe', isAnomaly:true, damage:20 },
+    ]
+  },
+  { type:'typing', delay:2000 },
+  { type:'them', text:'gw bisa lihat lo dari sini', time:'17:40', delay:0 },
+  { type:'them', text:'l̸o̷ ̸p̵a̴k̵e̶ ̷b̴a̵j̸u̴ ̶m̷e̵r̵a̴h̶ ̷k̵a̸n̷', time:'17:40', delay:1000, anomalyText:true },
+  {
+    type:'choice',
+    choices:[
+      { label:'Matiin hp dan sembunyi!', reply:'gw matiin hp sekarang', isAnomaly:false, safe:true },
+      { label:'Siapa lo sebenernya?!', reply:'SIAPA LO SEBENERNYA?! BERHENTI!', isAnomaly:false, safe:true },
+      { label:'⚠️ Konfirmasi warna baju [ANOMALY]', reply:'iya baju merah... gimana lo tau?', isAnomaly:true, damage:40 },
+    ]
+  },
+  { type:'typing', delay:4000 },
+  { type:'them', text:'selamat, lo berhasil bertahan malam ini', time:'17:45', delay:0 },
+  { type:'them', text:'tapi besok malam...', time:'17:45', delay:1500 },
+  { type:'them', text:'gw balik lagi', time:'17:46', delay:2000 },
+  { type:'win', delay:3000 },
+];
+
+let storyIndex = 0;
+let isProcessing = false;
+let typingRow = null;
+
+// ═══════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════
+function getTime() {
+  const n = new Date();
+  return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+}
+
+function scrollBottom() {
+  const c = document.getElementById('chatArea');
+  c.scrollTop = c.scrollHeight;
+}
+
+function addBubble(who, text, time, isAnomaly=false) {
+  const chat = document.getElementById('chatArea');
+  const row = document.createElement('div');
+  row.className = `msg-row ${who}`;
+
+  const bubble = document.createElement('div');
+  bubble.className = `bubble ${who}${isAnomaly ? ' anomaly' : ''}`;
+
+  if(who === 'them') {
+    const name = document.createElement('div');
+    name.className = 'sender-name';
+    name.textContent = document.getElementById('contactName').textContent;
+    bubble.appendChild(name);
+  }
+
+  const textEl = document.createElement('div');
+  textEl.textContent = text;
+  bubble.appendChild(textEl);
+
+  const timeEl = document.createElement('div');
+  timeEl.className = 'msg-time';
+  timeEl.textContent = time || getTime();
+  bubble.appendChild(timeEl);
+
+  row.appendChild(bubble);
+  chat.appendChild(row);
+  scrollBottom();
+  return row;
+}
+
+function addImageBubble(src, caption, time) {
+  const chat = document.getElementById('chatArea');
+  const row = document.createElement('div');
+  row.className = 'msg-row them';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble them';
+
+  const name = document.createElement('div');
+  name.className = 'sender-name';
+  name.textContent = document.getElementById('contactName').textContent;
+  bubble.appendChild(name);
+
+  // Use placeholder horror image if no URL set
+  const img = document.createElement('img');
+  img.className = 'msg-img';
+  // Horror placeholder using CSS gradient if no URL
+  img.src = (imageUrl) || 'data:image/svg+xml,' + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="150">
+      <rect width="200" height="150" fill="#0a0000"/>
+      <text x="100" y="70" text-anchor="middle" fill="#ff000033" font-size="40">☠</text>
+      <text x="100" y="110" text-anchor="middle" fill="#ff000055" font-size="12" font-family="monospace">foto_01.jpg</text>
+      <rect x="0" y="0" width="200" height="150" fill="none" stroke="#ff000022" stroke-width="2"/>
+    </svg>
+  `);
+  img.alt = caption;
+  img.onclick = () => {
+    document.getElementById('fullscreenImg').src = img.src;
+    document.getElementById('imgFullscreen').style.display = 'flex';
+  };
+  bubble.appendChild(img);
+
+  if(caption) {
+    const capEl = document.createElement('div');
+    capEl.style.cssText = 'font-size:11px;color:#555;margin-top:4px;';
+    capEl.textContent = caption;
+    bubble.appendChild(capEl);
+  }
+
+  const timeEl = document.createElement('div');
+  timeEl.className = 'msg-time';
+  timeEl.textContent = time || getTime();
+  bubble.appendChild(timeEl);
+
+  row.appendChild(bubble);
+  chat.appendChild(row);
+  scrollBottom();
+
+  // Horror effect on photo reveal
+  flashWarning();
+  screenShake();
+}
+
+function showTyping() {
+  const chat = document.getElementById('chatArea');
+  removeTyping();
+  const row = document.createElement('div');
+  row.className = 'msg-row them';
+  row.id = 'typingRow';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'typing-bubble';
+  bubble.innerHTML = `<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>`;
+  row.appendChild(bubble);
+  chat.appendChild(row);
+
+  document.getElementById('contactStatus').textContent = 'typing...';
+  document.getElementById('contactStatus').className = 'header-status typing';
+  scrollBottom();
+}
+
+function removeTyping() {
+  const r = document.getElementById('typingRow');
+  if(r) r.remove();
+  document.getElementById('contactStatus').textContent = 'online';
+  document.getElementById('contactStatus').className = 'header-status';
+}
+
+function flashWarning() {
+  const o = document.getElementById('warningOverlay');
+  o.style.display = 'block';
+  setTimeout(() => { o.style.display = 'none'; }, 500);
+}
+
+function screenShake() {
+  document.body.classList.add('shake');
+  setTimeout(() => document.body.classList.remove('shake'), 500);
+}
+
+function updateHP() {
+  const fill = document.getElementById('hpFill');
+  const val = document.getElementById('hpValue');
+  fill.style.width = hp + '%';
+  val.textContent = hp;
+  if(hp <= 30) {
+    fill.style.background = '#ff0000';
+    document.getElementById('contactStatus').className = 'header-status danger';
+    document.getElementById('contactStatus').textContent = '⚠️ DANGER';
+  } else if(hp <= 60) {
+    fill.style.background = 'linear-gradient(90deg, #8b0000, #ff6600)';
+  }
+}
+
+function updateAnomalyCounter() {
+  document.getElementById('anomalyCounter').textContent = `⚠️ ${missedAnomalies}/${TOTAL_ANOMALIES_LIMIT} anomalies`;
+}
+
+// ═══════════════════════════════════════
+//  CHOICES
+// ═══════════════════════════════════════
+function showChoices(choices) {
+  const area = document.getElementById('choiceArea');
+  area.innerHTML = '';
+  area.style.display = 'flex';
+
+  choices.forEach((c,i) => {
+    const btn = document.createElement('button');
+    btn.className = `choice-btn ${c.isAnomaly ? 'anomaly-btn' : 'safe-btn'}`;
+    btn.textContent = c.label;
+    btn.onclick = () => handleChoice(c);
+    area.appendChild(btn);
+  });
+}
+
+function hideChoices() {
+  const area = document.getElementById('choiceArea');
+  area.style.display = 'none';
+  area.innerHTML = '';
+}
+
+function handleChoice(choice) {
+  hideChoices();
+
+  if(choice.isAnomaly) {
+    // Player fell for anomaly!
+    missedAnomalies++;
+    hp -= (choice.damage || 25);
+    if(hp < 0) hp = 0;
+    updateHP();
+    updateAnomalyCounter();
+    flashWarning();
+    screenShake();
+
+    // Add player reply
+    if(choice.reply && !choice.skip) {
+      addBubble('us', choice.reply, getTime(), true);
+    }
+
+    // Add system notice
+    setTimeout(() => {
+      const chat = document.getElementById('chatArea');
+      const notice = document.createElement('div');
+      notice.style.cssText = 'text-align:center;margin:6px 0;z-index:1;position:relative;';
+      notice.innerHTML = `<span style="background:rgba(100,0,0,0.3);color:#ff4444;font-size:10px;padding:3px 10px;border-radius:8px;border:1px solid #5a0000;">⚠️ ANOMALY DETECTED — HP -${choice.damage||25}</span>`;
+      chat.appendChild(notice);
+      scrollBottom();
+
+      if(missedAnomalies >= TOTAL_ANOMALIES_LIMIT || hp <= 0) {
+        setTimeout(() => triggerDeath('Lo terlalu percaya pada entitas ini...'), 1500);
+      } else {
+        setTimeout(() => nextStory(), 800);
+      }
+    }, 300);
+
+  } else {
+    // Safe choice
+    if(choice.reply) {
+      addBubble('us', choice.reply, getTime());
+    }
+    setTimeout(() => nextStory(), 600);
+  }
+}
+
+// ═══════════════════════════════════════
+//  STORY ENGINE
+// ═══════════════════════════════════════
+function nextStory() {
+  if(isProcessing) return;
+  if(storyIndex >= story.length) return;
+
+  const step = story[storyIndex];
+  storyIndex++;
+  isProcessing = true;
+
+  const proceed = () => { isProcessing = false; nextStory(); };
+
+  if(step.type === 'typing') {
+    showTyping();
+    setTimeout(() => {
+      removeTyping();
+      isProcessing = false;
+      nextStory();
+    }, step.delay || 2000);
+
+  } else if(step.type === 'them') {
+    setTimeout(() => {
+      addBubble('them', step.text, step.time, step.anomalyText);
+      if(step.anomalyText) { flashWarning(); screenShake(); }
+      isProcessing = false;
+      if(step.delay && step.delay > 0) {
+        setTimeout(() => nextStory(), step.delay);
+      } else {
+        nextStory();
+      }
+    }, step.delay || 0);
+
+  } else if(step.type === 'image') {
+    setTimeout(() => {
+      addImageBubble(step.src, step.caption, step.time);
+      isProcessing = false;
+      nextStory();
+    }, step.delay || 0);
+
+  } else if(step.type === 'choice') {
+    showChoices(step.choices);
+    isProcessing = false;
+    // Don't call nextStory — wait for player
+
+  } else if(step.type === 'win') {
+    setTimeout(() => {
+      triggerWin();
+      isProcessing = false;
+    }, step.delay || 2000);
+
+  } else {
+    isProcessing = false;
+    nextStory();
+  }
+}
+
+// ═══════════════════════════════════════
+//  DEATH / WIN
+// ═══════════════════════════════════════
+function triggerDeath(reason) {
+  document.getElementById('deathReason').textContent = reason || '';
+  document.getElementById('gameoverScreen').style.display = 'flex';
+  screenShake();
+  flashWarning();
+}
+
+function triggerWin() {
+  document.getElementById('winScreen').style.display = 'flex';
+}
+
+// ═══════════════════════════════════════
+//  START GAME
+// ═══════════════════════════════════════
+function startGame() {
+  hp = 100;
+  anomalyCount = 0;
+  missedAnomalies = 0;
+  storyIndex = 0;
+  isProcessing = false;
+
+  document.getElementById('gameoverScreen').style.display = 'none';
+  document.getElementById('winScreen').style.display = 'none';
+  document.getElementById('chatArea').innerHTML = `
+    <div class="date-divider"><span id="dateLabel">December 8, 2025</span></div>
+    <div class="enc-notice">
+      <p>🔒 Messages and calls are end-to-end encrypted.<br>Only people in this chat can read, listen to, or share them.</p>
+    </div>
+  `;
+  hideChoices();
+  updateHP();
+  updateAnomalyCounter();
+
+  // Random contact name for horror effect
+  const names = ['UNKNOWN', '???', 'user_deleted', 'null', 'ERROR_404'];
+  document.getElementById('contactName').textContent = names[Math.floor(Math.random()*names.length)];
+
+  setTimeout(() => nextStory(), 1000);
+}
+
+// Set image URL — Lo tinggal panggil ini dengan URL Vercel Blob lo!
+function setImageUrl(url) {
+  imageUrl = url;
+}
+
+// ═══════════════════════════════════════
+//  IMAGE ASSETS — VERCEL BLOB
+// ═══════════════════════════════════════
+setImageUrl('https://yxxqz8llpymqy1ec.public.blob.vercel-storage.com/photos_assets/darkcorridor0A1.jpg');
+
+// START!
+startGame();
+</script>
+</body>
+</html>
