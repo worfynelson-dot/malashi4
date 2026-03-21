@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <title>Nokia – XCV Sterwork</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+
+    html,body{
+      width:100%;
+      height:100%;
+      height:100dvh;
+      background:#0a0a14;
+      overflow:hidden;
+      font-family:'Press Start 2P',monospace;
+      touch-action:none;
+    }
+
+    /* ============ MOBILE FIRST: full screen ============ */
+    body{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+    }
+
+    #phone{
+      width:100%;
+      max-width:360px;
+      height:100dvh;
+      display:flex;
+      flex-direction:column;
+      background:linear-gradient(160deg,#232340 0%,#14142a 55%,#0e0e20 100%);
+      padding:10px 12px calc(8px + env(safe-area-inset-bottom,0px)) 12px;
+      overflow:hidden;
+    }
+
+    /* DESKTOP override */
+    @media(min-width:520px){
+      #phone{
+        height:auto;
+        max-height:96vh;
+        border-radius:26px 26px 38px 38px;
+        box-shadow:0 0 0 2px #2a2a4a,0 32px 80px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.07);
+        padding:14px 14px 22px;
+      }
+      #screen{height:210px;flex:none}
+      #main-area{height:calc(210px - 14px - 14px);flex:none}
+    }
+
+    /* Earpiece */
+    #earpiece{
+      width:54px;height:5px;
+      background:#080814;
+      border-radius:3px;
+      margin:0 auto 8px;
+      box-shadow:inset 0 1px 3px rgba(0,0,0,.9);
+      flex-shrink:0;
+    }
+
+    /* Screen wrapper */
+    #screen-wrapper{
+      background:#07070f;
+      border-radius:8px 8px 4px 4px;
+      padding:8px;
+      margin-bottom:6px;
+      box-shadow:inset 0 3px 10px rgba(0,0,0,.9);
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+
+    /* LCD */
+    #screen{
+      background:#8fac44;
+      width:100%;
+      flex:1;
+      min-height:0;
+      border-radius:3px;
+      position:relative;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      box-shadow:inset 0 0 16px rgba(0,0,0,.3),0 0 8px rgba(143,172,68,.15);
+    }
+    #screen::after{
+      content:'';position:absolute;inset:0;
+      background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 3px);
+      pointer-events:none;z-index:20;
+    }
+
+    /* STATUS BAR */
+    #status-bar{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:3px 6px 2px;
+      border-bottom:1px solid rgba(15,45,8,.3);
+      flex-shrink:0;z-index:5;position:relative;
+    }
+    #status-left{display:flex;align-items:center;gap:3px}
+    #status-right{display:flex;align-items:center;gap:3px}
+    .signal-bars{display:flex;align-items:flex-end;gap:1px}
+    .sbar{background:#1a4010;border-radius:1px}
+    .sbar:nth-child(1){width:2px;height:3px}
+    .sbar:nth-child(2){width:2px;height:5px}
+    .sbar:nth-child(3){width:2px;height:7px}
+    .sbar:nth-child(4){width:2px;height:9px}
+    #operator-name{font-size:6px;color:#1a4010;letter-spacing:.2px}
+    .batt-wrap{display:flex;align-items:center;gap:2px}
+    #batt-icon{
+      width:14px;height:7px;border:1px solid #1a4010;border-radius:1px;
+      position:relative;padding:1px;display:flex;align-items:center;
+    }
+    #batt-icon::after{
+      content:'';position:absolute;right:-3px;top:50%;transform:translateY(-50%);
+      width:2px;height:3px;background:#1a4010;border-radius:0 1px 1px 0;
+    }
+    #batt-fill{height:100%;background:#1a4010;border-radius:1px;transition:width .5s;width:80%}
+    #batt-pct{font-size:5px;color:#1a4010}
+
+    /* MAIN AREA */
+    #main-area{
+      flex:1;min-height:0;
+      position:relative;
+      display:flex;flex-direction:column;
+      overflow:hidden;
+    }
+
+    /* SOFTKEY BAR */
+    #softkey-bar{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:2px 6px;
+      border-top:1px solid rgba(15,45,8,.3);
+      flex-shrink:0;z-index:5;position:relative;
+    }
+    .sk-lbl{font-size:5px;color:#1a4010;min-width:28px}
+    .sk-lbl:nth-child(2){text-align:center;flex:1}
+    .sk-lbl:last-child{text-align:right}
+
+    /* ===== PANELS ===== */
+    .panel{display:none;width:100%;height:100%;flex-direction:column}
+    .panel.active{display:flex}
+
+    /* STARTUP */
+    #panel-startup{align-items:center;justify-content:center}
+    #startup-logo{font-size:20px;color:#1a4010;letter-spacing:8px;opacity:0;transition:opacity .5s}
+    #startup-logo.show{opacity:1}
+
+    /* LOCKSCREEN */
+    #panel-lock{align-items:center;justify-content:space-around;padding:8px}
+    #lock-top{text-align:center}
+    #lock-icon{font-size:12px;color:#1a4010;margin-bottom:4px}
+    #lock-time{font-size:26px;color:#1a4010;letter-spacing:4px;line-height:1}
+    #lock-date{font-size:6px;color:#1a4010;margin-top:4px;letter-spacing:.3px}
+    #slide-track{
+      width:100%;height:22px;
+      background:rgba(15,45,8,.15);
+      border:1px solid rgba(15,45,8,.4);
+      border-radius:11px;position:relative;overflow:hidden;cursor:pointer;
+    }
+    #slide-hint{
+      position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      font-size:4px;color:rgba(15,45,8,.45);letter-spacing:1px;pointer-events:none;
+    }
+    #slide-thumb{
+      position:absolute;left:2px;top:2px;
+      width:26px;height:18px;
+      background:#1a4010;border-radius:9px;
+      cursor:grab;z-index:2;transition:none;
+    }
+
+    /* MENU */
+    #panel-menu{padding:6px 4px}
+    .menu-title{font-size:7px;color:#1a4010;text-align:center;border-bottom:1px solid rgba(15,45,8,.35);padding-bottom:3px;margin-bottom:5px;flex-shrink:0}
+    .menu-row{font-size:6px;color:rgba(15,45,8,.38);padding:5px 6px;border-radius:2px;flex-shrink:0}
+    .menu-row.sel{background:#1a4010;color:#8fac44}
+
+    /* LEVEL SELECT */
+    #panel-level{padding:4px 4px 2px;overflow:hidden}
+    #level-title{font-size:6px;color:#1a4010;text-align:center;border-bottom:1px solid rgba(15,45,8,.35);padding-bottom:2px;margin-bottom:2px;flex-shrink:0}
+    #level-list{overflow:hidden;flex:1;display:flex;flex-direction:column}
+    .lvl-row{font-size:5px;color:rgba(15,45,8,.38);padding:3px 5px;border-radius:2px;flex-shrink:0}
+    .lvl-row.sel{background:#1a4010;color:#8fac44}
+
+    /* GAME */
+    #panel-game{align-items:center;position:relative}
+    #game-hud{width:100%;font-size:5px;color:#1a4010;text-align:center;padding:2px 0 1px;flex-shrink:0;letter-spacing:.3px}
+    #game-canvas-wrap{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    #gameCanvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+    #pause-overlay{
+      position:absolute;inset:0;display:none;
+      align-items:center;justify-content:center;
+      background:rgba(143,172,68,.8);z-index:10;
+    }
+    #pause-overlay.show{display:flex}
+    #pause-txt{font-size:9px;color:#1a4010;animation:blink .6s infinite}
+
+    /* GAME OVER */
+    #panel-over{align-items:center;justify-content:center;gap:10px;padding:8px}
+    #over-title{font-size:10px;color:#1a4010;text-align:center;animation:blink .7s infinite}
+    .over-info{font-size:6px;color:#1a4010;text-align:center;letter-spacing:.3px}
+    #over-hint{font-size:5px;color:rgba(15,45,8,.5);text-align:center;line-height:2}
+
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+    /* Nokia logo */
+    #nokia-logo{
+      text-align:center;color:#3535 58;
+      color:#38385a;
+      font-size:7px;letter-spacing:5px;
+      margin:5px 0 4px;
+      flex-shrink:0;
+    }
+
+    /* ===== KEYPAD ===== */
+    #keypad{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+
+    .key{
+      background:linear-gradient(160deg,#3c3c62 0%,#252545 100%);
+      border:none;border-radius:7px;
+      color:#c8c8e8;cursor:pointer;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      box-shadow:0 4px 0 #0b0b1c,0 5px 8px rgba(0,0,0,.55);
+      transition:transform .07s,box-shadow .07s;
+      position:relative;overflow:hidden;
+    }
+    .key::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:42%;
+      background:rgba(255,255,255,.07);border-radius:7px 7px 0 0;pointer-events:none;
+    }
+    .key:active,.key.pressed{
+      transform:translateY(3px);
+      box-shadow:0 1px 0 #0b0b1c,0 2px 4px rgba(0,0,0,.5);
+    }
+    .km{font-family:'Press Start 2P',monospace;font-size:9px;line-height:1}
+    .ks{font-size:4px;color:#8888b8;margin-top:2px;letter-spacing:.2px}
+
+    /* Soft key row */
+    #row-soft{display:grid;grid-template-columns:1fr 40px 1fr;gap:4px}
+    .soft-key{height:26px}
+    .soft-key .km{font-size:7px}
+    #btn-end{background:linear-gradient(150deg,#5c1a1a,#3a0808);box-shadow:0 4px 0 #180000,0 5px 8px rgba(0,0,0,.5)}
+    #btn-end:active{box-shadow:0 1px 0 #180000,0 2px 3px rgba(0,0,0,.5)}
+
+    /* D-pad */
+    #row-dpad{display:grid;grid-template-columns:1fr 46px 1fr;grid-template-rows:30px 46px 30px;gap:3px;padding:0 8px}
+    .nav-key{height:100%}
+    .nav-key .km{font-size:11px}
+    #btn-ok{
+      background:radial-gradient(circle at 40% 35%,#5c5c8c,#28284a);
+      border-radius:50%;
+      box-shadow:0 4px 0 #0b0b1c,0 5px 10px rgba(0,0,0,.6);
+    }
+    #btn-ok .km{font-size:7px;color:#dde}
+    #btn-ok:active{box-shadow:0 1px 0 #0b0b1c,0 2px 4px rgba(0,0,0,.5)}
+    .dpad-empty{background:transparent;box-shadow:none;pointer-events:none}
+    .dpad-empty::before{display:none}
+
+    /* Numpad */
+    #row-num{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+    .num-key{height:30px}
+  </style>
+</head>
+<body>
+<div id="phone">
+
+  <div id="earpiece"></div>
+
+  <div id="screen-wrapper">
+    <div id="screen">
+
+      <div id="status-bar">
+        <div id="status-left">
+          <div class="signal-bars">
+            <div class="sbar"></div><div class="sbar"></div>
+            <div class="sbar"></div><div class="sbar"></div>
+          </div>
+          <span id="operator-name">XCV Sterwork</span>
+        </div>
+        <div id="status-right">
+          <div class="batt-wrap">
+            <div id="batt-icon"><div id="batt-fill"></div></div>
+            <span id="batt-pct">--</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="main-area">
+        <!-- STARTUP -->
+        <div id="panel-startup" class="panel">
+          <div id="startup-logo">NOKIA</div>
+        </div>
+
+        <!-- LOCKSCREEN -->
+        <div id="panel-lock" class="panel">
+          <div id="lock-top">
+            <div id="lock-icon">&#128274;</div>
+            <div id="lock-time">00:00</div>
+            <div id="lock-date">MON, 1 JAN</div>
+          </div>
+          <div id="slide-track">
+            <div id="slide-hint">&gt;&gt; SLIDE TO UNLOCK &gt;&gt;</div>
+            <div id="slide-thumb"></div>
+          </div>
+        </div>
+
+        <!-- MENU -->
+        <div id="panel-menu" class="panel">
+          <div class="menu-title">MENU</div>
+          <div class="menu-row sel" id="mi-0">&#9642; SNAKE</div>
+          <div class="menu-row" id="mi-1">&#9643; &nbsp;- - - -</div>
+          <div class="menu-row" id="mi-2">&#9643; &nbsp;- - - -</div>
+          <div class="menu-row" id="mi-3">&#9643; &nbsp;- - - -</div>
+        </div>
+
+        <!-- LEVEL -->
+        <div id="panel-level" class="panel">
+          <div id="level-title">SELECT LEVEL</div>
+          <div id="level-list"></div>
+        </div>
+
+        <!-- GAME -->
+        <div id="panel-game" class="panel">
+          <div id="game-hud">SCORE: 0 &nbsp;|&nbsp; BEST: 0</div>
+          <div id="game-canvas-wrap">
+            <canvas id="gameCanvas"></canvas>
+          </div>
+          <div id="pause-overlay"><div id="pause-txt">PAUSED</div></div>
+        </div>
+
+        <!-- GAME OVER -->
+        <div id="panel-over" class="panel">
+          <div id="over-title">GAME OVER</div>
+          <div class="over-info" id="over-score">SCORE: 0</div>
+          <div class="over-info" id="over-best">BEST: 0</div>
+          <div id="over-hint">OK = RETRY<br>LEFT = MENU</div>
+        </div>
+      </div>
+
+      <div id="softkey-bar">
+        <span class="sk-lbl" id="sk-left"></span>
+        <span class="sk-lbl" id="sk-mid"></span>
+        <span class="sk-lbl" id="sk-right"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="nokia-logo">NOKIA</div>
+
+  <div id="keypad">
+    <div id="row-soft">
+      <button class="key soft-key" data-key="lsoft"><span class="km">&#9665;</span></button>
+      <button class="key soft-key" id="btn-end" data-key="end"><span class="km" style="font-size:5px;color:#f88">END</span></button>
+      <button class="key soft-key" data-key="rsoft"><span class="km">&#9655;</span></button>
+    </div>
+    <div id="row-dpad">
+      <div class="key dpad-empty"></div>
+      <button class="key nav-key" data-key="up"><span class="km">&#9650;</span></button>
+      <div class="key dpad-empty"></div>
+      <button class="key nav-key" data-key="left"><span class="km">&#9664;</span></button>
+      <button class="key nav-key" id="btn-ok" data-key="ok"><span class="km">OK</span></button>
+      <button class="key nav-key" data-key="right"><span class="km">&#9654;</span></button>
+      <div class="key dpad-empty"></div>
+      <button class="key nav-key" data-key="down"><span class="km">&#9660;</span></button>
+      <div class="key dpad-empty"></div>
+    </div>
+    <div id="row-num">
+      <button class="key num-key" data-key="1"><span class="km">1</span></button>
+      <button class="key num-key" data-key="2"><span class="km">2</span><span class="ks">ABC</span></button>
+      <button class="key num-key" data-key="3"><span class="km">3</span><span class="ks">DEF</span></button>
+      <button class="key num-key" data-key="4"><span class="km">4</span><span class="ks">GHI</span></button>
+      <button class="key num-key" data-key="5"><span class="km">5</span><span class="ks">JKL</span></button>
+      <button class="key num-key" data-key="6"><span class="km">6</span><span class="ks">MNO</span></button>
+      <button class="key num-key" data-key="7"><span class="km">7</span><span class="ks">PQRS</span></button>
+      <button class="key num-key" data-key="8"><span class="km">8</span><span class="ks">TUV</span></button>
+      <button class="key num-key" data-key="9"><span class="km">9</span><span class="ks">WXYZ</span></button>
+      <button class="key num-key" data-key="star"><span class="km">*</span></button>
+      <button class="key num-key" data-key="0"><span class="km">0</span><span class="ks">+</span></button>
+      <button class="key num-key" data-key="hash"><span class="km">#</span></button>
+    </div>
+  </div>
+
+</div>
+<script src="engineGame.js"></script>
+</body>
+</html>
