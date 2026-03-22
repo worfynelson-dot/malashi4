@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Realm of Victory (ROV)</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060614;
+  --bg2: #0d0d2b;
+  --bg3: #111133;
+  --panel: #0a0a20;
+  --border: #2a2a5a;
+  --gold: #ffd700;
+  --gold2: #ffaa00;
+  --text: #e0e0ff;
+  --text2: #9090cc;
+  --red: #ff3333;
+  --green: #33ff66;
+  --blue: #4488ff;
+  --mana: #6666ff;
+  --hp-bar: #33cc44;
+  --hp-low: #ff4444;
+  --hp-mid: #ffaa00;
+  --pixel: 'Press Start 2P', monospace;
+
+  --c-common: #aaaaaa;
+  --c-uncommon: #44ff88;
+  --c-rare: #4488ff;
+  --c-epic: #cc44ff;
+  --c-legendary: #ffcc00;
+  --c-secret: #ff4444;
+  --c-mythic: #ff88ff;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; image-rendering: pixelated; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--pixel);
+  font-size: 8px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ---- PIXEL UTILS ---- */
+.px-border {
+  border: 2px solid var(--border);
+  box-shadow: inset -2px -2px 0 #00000088, inset 2px 2px 0 #ffffff11;
+}
+.px-btn {
+  font-family: var(--pixel);
+  font-size: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  border: 2px solid var(--gold);
+  background: #1a1a3a;
+  color: var(--gold);
+  box-shadow: 3px 3px 0 #000, -1px -1px 0 #ffffff22;
+  transition: all 0.05s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.px-btn:hover { background: #2a2a5a; transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #000; }
+.px-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 #000; }
+.px-btn.danger { border-color: var(--red); color: var(--red); }
+.px-btn.success { border-color: var(--green); color: var(--green); }
+.px-btn.blue { border-color: var(--blue); color: var(--blue); }
+.px-btn.epic { border-color: #cc44ff; color: #cc44ff; }
+.px-btn.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+.gold-text { color: var(--gold); text-shadow: 0 0 8px var(--gold); }
+
+/* ---- SCREENS ---- */
+.screen { display: none; width: 100%; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ========= MAIN MENU ========= */
+#screen-mainmenu {
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+#screen-mainmenu::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 80%, #1a0a3a 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, #0a1a3a 0%, transparent 50%);
+  pointer-events: none;
+}
+.stars-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.star {
+  position: absolute;
+  background: #fff;
+  width: 2px; height: 2px;
+  animation: twinkle var(--dur, 2s) infinite alternate;
+}
+@keyframes twinkle { from { opacity: 0.2; } to { opacity: 1; } }
+
+.menu-container {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px;
+}
+.menu-logo {
+  font-size: 22px;
+  color: var(--gold);
+  text-shadow: 0 0 20px var(--gold), 3px 3px 0 #000, 6px 6px 0 #4400aa;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+  animation: logoPulse 2s infinite alternate;
+  text-align: center;
+}
+@keyframes logoPulse {
+  from { text-shadow: 0 0 10px var(--gold), 3px 3px 0 #000; }
+  to { text-shadow: 0 0 30px var(--gold), 0 0 60px #ffaa00, 3px 3px 0 #000; }
+}
+.menu-subtitle { font-size: 7px; color: var(--text2); letter-spacing: 3px; margin-bottom: 16px; }
+.menu-art { font-size: 48px; margin-bottom: 8px; animation: float 3s ease-in-out infinite; }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+.menu-gold-display {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--gold); font-size: 8px;
+  border: 2px solid var(--gold);
+  padding: 6px 12px;
+  background: #1a1200;
+  margin-bottom: 10px;
+}
+.menu-version { color: var(--text2); font-size: 6px; margin-top: 12px; }
+
+/* ========= STORY MAP ========= */
+#screen-story { background: var(--bg); padding: 16px; align-items: center; }
+.story-header { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 700px; margin-bottom: 16px; }
+.story-title { color: var(--gold); font-size: 12px; flex: 1; }
+.chapter-grid { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 700px; }
+.chapter-card {
+  border: 2px solid var(--border);
+  background: var(--panel);
+  padding: 12px;
+  box-shadow: 4px 4px 0 #000;
+}
+.chapter-card.locked { opacity: 0.4; pointer-events: none; }
+.chapter-card.active { border-color: var(--gold); }
+.chapter-card.completed { border-color: var(--green); }
+.chapter-title { font-size: 9px; color: var(--gold); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.chapter-desc { font-size: 6px; color: var(--text2); margin-bottom: 10px; line-height: 1.8; }
+.stages-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.stage-btn {
+  font-family: var(--pixel);
+  font-size: 7px;
+  padding: 6px 10px;
+  cursor: pointer;
+  border: 2px solid var(--border);
+  background: #0a0a20;
+  color: var(--text);
+  box-shadow: 2px 2px 0 #000;
+}
+.stage-btn.completed { border-color: var(--green); color: var(--green); }
+.stage-btn.boss { border-color: var(--red); color: var(--red); }
+.stage-btn.boss.completed { border-color: var(--gold); color: var(--gold); }
+.stage-btn:hover:not(:disabled) { background: #1a1a40; }
+.stage-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ========= BATTLE SCREEN ========= */
+#screen-battle {
+  background: var(--bg);
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+.battle-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 30%, #1a0044 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 100%, #001a00 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Battle zones */
+.battle-top { padding: 8px 12px; position: relative; z-index: 2; }
+.battle-middle {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: relative;
+  z-index: 2;
+  padding: 4px;
+}
+.battle-bottom { padding: 8px 12px; position: relative; z-index: 2; }
+
+/* Combatant info */
+.combatant-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #00000066;
+  border: 2px solid var(--border);
+  padding: 6px 10px;
+  backdrop-filter: blur(2px);
+}
+.combatant-art { font-size: 24px; }
+.combatant-name { font-size: 8px; color: var(--gold); margin-bottom: 4px; }
+.combatant-name.enemy { color: var(--red); }
+.hp-bar-wrap { display: flex; align-items: center; gap: 4px; margin-bottom: 3px; }
+.hp-bar-outer { width: 120px; height: 8px; background: #111; border: 1px solid #333; }
+.hp-bar-inner { height: 100%; background: var(--hp-bar); transition: width 0.3s; }
+.hp-text { font-size: 6px; color: var(--text2); white-space: nowrap; }
+.mana-bar-wrap { display: flex; align-items: center; gap: 4px; }
+.mana-dots { display: flex; gap: 2px; }
+.mana-dot {
+  width: 7px; height: 7px;
+  border: 1px solid var(--mana);
+  background: #000;
+}
+.mana-dot.filled { background: var(--mana); box-shadow: 0 0 4px var(--mana); }
+.mana-text { font-size: 6px; color: var(--mana); }
+.status-row { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
+.status-badge {
+  font-size: 6px;
+  padding: 2px 4px;
+  border: 1px solid #555;
+  background: #111;
+}
+.status-badge.burn { border-color: #ff4400; color: #ff4400; }
+.status-badge.poison { border-color: #44ff44; color: #44ff44; }
+.status-badge.freeze { border-color: #44aaff; color: #44aaff; }
+.status-badge.shield { border-color: #4444ff; color: #4444ff; }
+.status-badge.buff { border-color: #ffff44; color: #ffff44; }
+.status-badge.debuff { border-color: #ff4444; color: #ff4444; }
+
+/* Battlefield */
+.battlefield {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+  padding: 8px;
+  border: 1px dashed #2a2a4a;
+  width: 100%;
+  max-width: 700px;
+  flex-wrap: wrap;
+}
+.battlefield-label {
+  font-size: 6px;
+  color: var(--text2);
+  text-align: center;
+  width: 100%;
+  margin-bottom: 2px;
+}
+
+/* Companion display in battlefield */
+.companion-display {
+  font-size: 18px;
+  background: #0a0a20;
+  border: 1px solid var(--green);
+  padding: 4px 6px;
+  animation: companionPulse 1s infinite alternate;
+}
+@keyframes companionPulse { from { box-shadow: 0 0 4px var(--green); } to { box-shadow: 0 0 12px var(--green); } }
+
+/* Enemy hand (face down) */
+.enemy-hand { display: flex; gap: 4px; justify-content: center; margin: 4px 0; }
+.card-back {
+  width: 36px; height: 52px;
+  background: repeating-linear-gradient(45deg, #1a1a3a 0px, #1a1a3a 2px, #0d0d20 2px, #0d0d20 4px);
+  border: 2px solid #333;
+  box-shadow: 2px 2px 0 #000;
+}
+
+/* ---- CARDS ---- */
+.card {
+  width: 70px;
+  min-height: 100px;
+  border: 2px solid var(--card-rarity-color, #aaa);
+  background: var(--card-bg, #0f0f2a);
+  box-shadow: 2px 2px 0 #000, 0 0 8px var(--card-glow, transparent);
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.1s, box-shadow 0.1s;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.card:hover { transform: translateY(-8px) scale(1.05); box-shadow: 2px 10px 0 #000, 0 0 20px var(--card-glow, #ffffff44); z-index: 10; }
+.card.selected { transform: translateY(-12px) scale(1.08); box-shadow: 0 0 0 2px #fff, 2px 12px 0 #000; z-index: 11; }
+.card.played { animation: cardPlay 0.3s ease-out; }
+@keyframes cardPlay { from { transform: scale(1.3) rotate(-5deg); opacity: 0.5; } to { transform: scale(1) rotate(0); opacity: 1; } }
+.card.grayed { opacity: 0.4; cursor: not-allowed; }
+
+.card-cost {
+  position: absolute;
+  top: 3px; left: 3px;
+  background: var(--mana);
+  color: #fff;
+  font-size: 7px;
+  width: 14px; height: 14px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid #000;
+  font-family: var(--pixel);
+}
+.card-rarity-gem {
+  position: absolute;
+  top: 3px; right: 3px;
+  font-size: 7px;
+}
+.card-art {
+  text-align: center;
+  font-size: 22px;
+  padding: 18px 0 4px;
+  line-height: 1;
+}
+.card-name {
+  font-size: 5.5px;
+  color: var(--text);
+  text-align: center;
+  padding: 2px 3px;
+  word-break: break-word;
+  line-height: 1.5;
+}
+.card-type-bar {
+  font-size: 5px;
+  text-align: center;
+  padding: 2px;
+  background: var(--card-type-color, #1a1a3a);
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.card-power {
+  position: absolute;
+  bottom: 3px; right: 3px;
+  background: #cc2200;
+  color: #fff;
+  font-size: 7px;
+  width: 14px; height: 14px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid #000;
+  font-family: var(--pixel);
+}
+.card.no-power .card-power { display: none; }
+
+/* Hand container */
+.hand-container {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  max-width: 100%;
+  padding: 4px;
+}
+
+/* Battle controls */
+.battle-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.deck-info { font-size: 6px; color: var(--text2); }
+
+/* Battle Log */
+#battle-log-container {
+  position: fixed;
+  bottom: 0; right: 0;
+  width: 220px;
+  max-height: 180px;
+  background: #00000099;
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  padding: 6px;
+  overflow-y: auto;
+  z-index: 100;
+}
+#battle-log-container::-webkit-scrollbar { width: 4px; }
+#battle-log-container::-webkit-scrollbar-thumb { background: var(--border); }
+.log-entry { font-size: 5.5px; color: var(--text2); padding: 1px 0; border-bottom: 1px solid #1a1a2a; line-height: 1.6; }
+.log-entry.dmg { color: #ff6666; }
+.log-entry.heal { color: #66ff88; }
+.log-entry.sys { color: var(--gold); }
+.log-entry.status { color: #aa88ff; }
+
+/* ========= COLLECTION ========= */
+#screen-collection { background: var(--bg); padding: 12px; }
+.col-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.col-title { color: var(--gold); font-size: 11px; flex: 1; }
+.col-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.filter-btn {
+  font-family: var(--pixel);
+  font-size: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+}
+.filter-btn.active { border-color: var(--gold); color: var(--gold); background: #1a1200; }
+.cards-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+}
+.cards-grid::-webkit-scrollbar { width: 4px; }
+.cards-grid::-webkit-scrollbar-thumb { background: var(--border); }
+
+/* ========= DECK BUILDER ========= */
+#screen-deckbuilder { background: var(--bg); padding: 12px; }
+.db-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.db-title { color: var(--gold); font-size: 11px; flex: 1; }
+.db-layout { display: flex; gap: 12px; height: calc(100vh - 100px); }
+.db-collection-panel {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  padding: 8px;
+  background: var(--panel);
+}
+.db-deck-panel {
+  width: 220px;
+  border: 1px solid var(--gold);
+  padding: 8px;
+  background: var(--panel);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.db-deck-panel::-webkit-scrollbar { width: 4px; }
+.db-deck-panel::-webkit-scrollbar-thumb { background: var(--border); }
+.db-collection-panel::-webkit-scrollbar { width: 4px; }
+.db-collection-panel::-webkit-scrollbar-thumb { background: var(--border); }
+.deck-title { font-size: 8px; color: var(--gold); margin-bottom: 6px; }
+.deck-count { font-size: 6px; color: var(--text2); }
+.deck-list-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 6px;
+  padding: 3px 4px;
+  border: 1px solid #222;
+  cursor: pointer;
+}
+.deck-list-item:hover { background: #1a1a3a; }
+.deck-list-item .item-art { font-size: 12px; }
+.deck-list-item .item-name { flex: 1; color: var(--text2); }
+.deck-list-item .item-remove { color: var(--red); }
+
+/* ========= SHOP ========= */
+#screen-shop { background: var(--bg); padding: 12px; align-items: center; }
+.shop-header { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 600px; margin-bottom: 14px; }
+.shop-title { color: var(--gold); font-size: 11px; flex: 1; }
+.shop-gold { font-size: 7px; color: var(--gold); }
+.packs-grid { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.pack-card {
+  width: 140px;
+  border: 2px solid var(--border);
+  background: var(--panel);
+  padding: 12px;
+  text-align: center;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.pack-card:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 #000; }
+.pack-art { font-size: 36px; margin-bottom: 8px; }
+.pack-name { font-size: 8px; color: var(--gold); margin-bottom: 4px; }
+.pack-desc { font-size: 5.5px; color: var(--text2); margin-bottom: 8px; line-height: 1.6; }
+.pack-price { font-size: 7px; color: var(--gold); margin-bottom: 8px; }
+.pack-card.gold-pack { border-color: var(--gold); }
+.pack-card.rare-pack { border-color: var(--blue); }
+.pack-card.epic-pack { border-color: #cc44ff; }
+.pack-card.legend-pack { border-color: var(--gold); background: #1a0a00; }
+.pack-card.legend-pack .pack-name { text-shadow: 0 0 10px var(--gold); }
+
+/* ========= CODEX ========= */
+#screen-codex { background: var(--bg); padding: 12px; }
+.codex-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.codex-title { color: var(--gold); font-size: 11px; flex: 1; }
+.codex-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+.codex-entry {
+  width: 160px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  padding: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.codex-entry:hover { border-color: var(--gold); }
+.codex-entry .ce-art { font-size: 28px; text-align: center; margin-bottom: 4px; }
+.codex-entry .ce-name { font-size: 6.5px; color: var(--gold); margin-bottom: 3px; }
+.codex-entry .ce-lore { font-size: 5.5px; color: var(--text2); line-height: 1.7; }
+.codex-entry.locked-entry { opacity: 0.3; }
+.codex-entry.locked-entry .ce-art::after { content: ' 🔒'; }
+
+/* ========= MODAL ========= */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #000000cc;
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal-overlay.active { display: flex; }
+.modal-box {
+  background: var(--panel);
+  border: 2px solid var(--gold);
+  box-shadow: 6px 6px 0 #000;
+  padding: 16px;
+  max-width: 320px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+.modal-title { font-size: 10px; color: var(--gold); margin-bottom: 10px; }
+.modal-art { font-size: 48px; text-align: center; margin: 8px 0; }
+.modal-close {
+  position: absolute;
+  top: 8px; right: 8px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-family: var(--pixel);
+  font-size: 7px;
+  padding: 3px 6px;
+  cursor: pointer;
+}
+.modal-close:hover { color: var(--red); border-color: var(--red); }
+.modal-section { margin-bottom: 8px; }
+.modal-label { font-size: 6px; color: var(--text2); margin-bottom: 3px; }
+.modal-value { font-size: 7px; color: var(--text); line-height: 1.7; }
+.modal-desc { font-size: 7px; color: var(--text); line-height: 1.8; margin-bottom: 6px; }
+.modal-lore { font-size: 6px; color: var(--text2); font-style: italic; line-height: 1.8; border-left: 2px solid var(--border); padding-left: 6px; }
+.upgrade-section { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; }
+.upgrade-cost { font-size: 7px; color: var(--gold); margin-bottom: 6px; }
+
+/* Victory / Defeat */
+#modal-result .modal-box { text-align: center; }
+.result-title { font-size: 16px; margin-bottom: 10px; }
+.result-title.victory { color: var(--gold); text-shadow: 0 0 20px var(--gold); animation: logoPulse 1s infinite alternate; }
+.result-title.defeat { color: var(--red); text-shadow: 0 0 20px var(--red); }
+.result-rewards { background: #0a0a00; border: 1px solid var(--gold); padding: 10px; margin: 10px 0; }
+.reward-item { font-size: 7px; color: var(--gold); padding: 3px 0; }
+.result-btns { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
+
+/* Pack opening */
+#modal-pack .cards-reveal { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 12px 0; }
+
+/* MULTIPLAYER NAME INPUT */
+.name-input {
+  font-family: var(--pixel);
+  font-size: 8px;
+  background: #0a0a20;
+  border: 2px solid var(--gold);
+  color: var(--gold);
+  padding: 8px;
+  width: 100%;
+  margin: 6px 0;
+}
+
+/* HP bar color classes */
+.hp-bar-inner.mid { background: var(--hp-mid); }
+.hp-bar-inner.low { background: var(--hp-low); animation: hpPulse 0.5s infinite alternate; }
+@keyframes hpPulse { from { opacity: 0.7; } to { opacity: 1; } }
+
+/* Scrollbar global */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); }
+
+/* Turn indicator */
+.turn-indicator {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  font-size: 18px;
+  color: var(--gold);
+  text-shadow: 0 0 20px var(--gold);
+  background: #000000cc;
+  border: 2px solid var(--gold);
+  padding: 12px 20px;
+  z-index: 300;
+  animation: fadeInOut 1.2s ease-in-out forwards;
+  pointer-events: none;
+}
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translate(-50%,-60%); }
+  20% { opacity: 1; transform: translate(-50%,-50%); }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Damage floater */
+.dmg-floater {
+  position: fixed;
+  font-size: 16px;
+  font-family: var(--pixel);
+  pointer-events: none;
+  z-index: 400;
+  animation: floatUp 1s ease-out forwards;
+}
+.dmg-floater.dmg { color: #ff4444; text-shadow: 2px 2px 0 #000; }
+.dmg-floater.heal { color: #44ff88; text-shadow: 2px 2px 0 #000; }
+.dmg-floater.mana { color: #8888ff; text-shadow: 2px 2px 0 #000; }
+@keyframes floatUp {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-60px); }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .card { width: 56px; min-height: 80px; }
+  .card-art { font-size: 18px; padding-top: 14px; }
+  .card-name { font-size: 4.5px; }
+  .menu-logo { font-size: 14px; }
+  .hp-bar-outer { width: 80px; }
+  #battle-log-container { width: 140px; }
+  .db-layout { flex-direction: column; }
+  .db-deck-panel { width: 100%; height: 180px; }
+}
+</style>
+</head>
+<body>
+
+<!-- =================== MAIN MENU =================== -->
+<div id="screen-mainmenu" class="screen active">
+  <div class="stars-bg" id="stars-bg"></div>
+  <div class="menu-container">
+    <div class="menu-logo">REALM OF<br>VICTORY</div>
+    <div class="menu-subtitle">— R O V —</div>
+    <div class="menu-art">⚔️</div>
+    <div class="menu-gold-display">💰 GOLD: <span id="menu-gold">0</span></div>
+    <button class="px-btn" onclick="showScreen('story')" style="width:200px;margin:3px 0">▶ STORY MODE</button>
+    <button class="px-btn blue" onclick="startMultiplayer()" style="width:200px;margin:3px 0">👥 LOCAL MULTIPLAYER</button>
+    <button class="px-btn" onclick="showScreen('deckbuilder')" style="width:200px;margin:3px 0">🃏 DECK BUILDER</button>
+    <button class="px-btn" onclick="showScreen('collection')" style="width:200px;margin:3px 0">📦 COLLECTION</button>
+    <button class="px-btn epic" onclick="showScreen('shop')" style="width:200px;margin:3px 0">🏪 SHOP</button>
+    <button class="px-btn" onclick="showScreen('codex')" style="width:200px;margin:3px 0">📖 CODEX</button>
+    <div class="menu-version">v1.0 — REALM OF VICTORY (ROV)</div>
+  </div>
+</div>
+
+<!-- =================== STORY MAP =================== -->
+<div id="screen-story" class="screen">
+  <div style="padding:12px;max-width:720px;margin:0 auto;width:100%">
+    <div class="story-header">
+      <button class="px-btn" onclick="showScreen('mainmenu')">◀ BACK</button>
+      <div class="story-title">📜 STORY MODE</div>
+      <div class="menu-gold-display" style="font-size:7px">💰 <span id="story-gold">0</span></div>
+    </div>
+    <div class="chapter-grid" id="chapter-grid"></div>
+  </div>
+</div>
+
+<!-- =================== BATTLE =================== -->
+<div id="screen-battle" class="screen">
+  <div class="battle-bg"></div>
+
+  <!-- Enemy Area -->
+  <div class="battle-top">
+    <div class="combatant-info" id="enemy-info">
+      <div class="combatant-art" id="enemy-art">👺</div>
+      <div style="flex:1">
+        <div class="combatant-name enemy" id="enemy-name">ENEMY</div>
+        <div class="hp-bar-wrap">
+          <div class="hp-bar-outer"><div class="hp-bar-inner" id="enemy-hp-bar" style="width:100%"></div></div>
+          <div class="hp-text" id="enemy-hp-text">30/30</div>
+        </div>
+        <div class="mana-bar-wrap">
+          <div class="mana-dots" id="enemy-mana-dots"></div>
+          <div class="mana-text" id="enemy-mana-text">0/0</div>
+        </div>
+        <div class="status-row" id="enemy-status-row"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+        <div class="deck-info">DECK: <span id="enemy-deck-count">0</span></div>
+        <div class="enemy-hand" id="enemy-hand-display"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Battlefield -->
+  <div class="battle-middle">
+    <div style="width:100%;max-width:700px">
+      <div class="battlefield-label">⚡ ENEMY FIELD</div>
+      <div class="battlefield" id="enemy-field"></div>
+    </div>
+    <div style="font-size:9px;color:var(--gold);padding:2px;text-align:center" id="turn-label">— YOUR TURN —</div>
+    <div style="width:100%;max-width:700px">
+      <div class="battlefield-label">🛡️ YOUR FIELD</div>
+      <div class="battlefield" id="player-field"></div>
+    </div>
+  </div>
+
+  <!-- Player Area -->
+  <div class="battle-bottom">
+    <div class="combatant-info" style="margin-bottom:6px">
+      <div class="combatant-art">🧑‍⚔️</div>
+      <div style="flex:1">
+        <div class="combatant-name" id="player-name-battle">YOU</div>
+        <div class="hp-bar-wrap">
+          <div class="hp-bar-outer"><div class="hp-bar-inner" id="player-hp-bar" style="width:100%"></div></div>
+          <div class="hp-text" id="player-hp-text">30/30</div>
+        </div>
+        <div class="mana-bar-wrap">
+          <div class="mana-dots" id="player-mana-dots"></div>
+          <div class="mana-text" id="player-mana-text">0/0</div>
+        </div>
+        <div class="status-row" id="player-status-row"></div>
+      </div>
+      <div style="text-align:right">
+        <div class="deck-info">DECK: <span id="player-deck-count">0</span></div>
+      </div>
+    </div>
+    <div class="hand-container" id="player-hand"></div>
+    <div class="battle-controls">
+      <div>
+        <div class="deck-info" id="selected-card-info">Select a card to play</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="px-btn danger" id="btn-end-turn" onclick="endPlayerTurn()">END TURN ▶</button>
+        <button class="px-btn" style="font-size:6px" onclick="showScreen('mainmenu');if(confirm('Surrender? (progress lost)')){showScreen('mainmenu');}">✖ FLEE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Battle Log -->
+  <div id="battle-log-container">
+    <div style="font-size:6px;color:var(--gold);margin-bottom:4px;border-bottom:1px solid var(--border);padding-bottom:3px">⚔️ BATTLE LOG</div>
+    <div id="battle-log"></div>
+  </div>
+</div>
+
+<!-- =================== COLLECTION =================== -->
+<div id="screen-collection" class="screen">
+  <div class="col-header">
+    <button class="px-btn" onclick="showScreen('mainmenu')">◀ BACK</button>
+    <div class="col-title">📦 COLLECTION</div>
+    <div style="font-size:7px;color:var(--text2)">Cards: <span id="col-count">0</span></div>
+  </div>
+  <div class="col-filters" id="col-filters">
+    <button class="filter-btn active" data-filter="all" onclick="filterCollection('all',this)">ALL</button>
+    <button class="filter-btn" data-filter="attack" onclick="filterCollection('attack',this)">⚔️ ATK</button>
+    <button class="filter-btn" data-filter="defense" onclick="filterCollection('defense',this)">🛡️ DEF</button>
+    <button class="filter-btn" data-filter="spell" onclick="filterCollection('spell',this)">🔮 SPELL</button>
+    <button class="filter-btn" data-filter="summon" onclick="filterCollection('summon',this)">👻 SUMMON</button>
+    <button class="filter-btn" data-filter="buff" onclick="filterCollection('buff',this)">⬆️ BUFF</button>
+    <button class="filter-btn" data-filter="LEGENDARY" onclick="filterCollection('LEGENDARY',this)">🌟 LEGEND</button>
+    <button class="filter-btn" data-filter="MYTHIC" onclick="filterCollection('MYTHIC',this)">💠 MYTHIC</button>
+  </div>
+  <div class="cards-grid" id="collection-grid"></div>
+</div>
+
+<!-- =================== DECK BUILDER =================== -->
+<div id="screen-deckbuilder" class="screen">
+  <div class="db-header">
+    <button class="px-btn" onclick="showScreen('mainmenu')">◀ BACK</button>
+    <div class="db-title">🃏 DECK BUILDER</div>
+    <button class="px-btn success" onclick="saveDeck()">💾 SAVE DECK</button>
+  </div>
+  <div class="db-layout">
+    <div class="db-collection-panel">
+      <div style="font-size:7px;color:var(--text2);margin-bottom:8px">Click cards to add to deck</div>
+      <div class="cards-grid" id="db-collection-grid" style="max-height:none;overflow:visible"></div>
+    </div>
+    <div class="db-deck-panel">
+      <div class="deck-title">CURRENT DECK</div>
+      <div class="deck-count">Cards: <span id="db-deck-count">0</span>/15</div>
+      <div id="db-deck-list" style="margin-top:8px"></div>
+      <button class="px-btn danger" style="margin-top:auto" onclick="clearDeck()">🗑️ CLEAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- =================== SHOP =================== -->
+<div id="screen-shop" class="screen">
+  <div class="shop-header">
+    <button class="px-btn" onclick="showScreen('mainmenu')">◀ BACK</button>
+    <div class="shop-title">🏪 CARD SHOP</div>
+    <div class="shop-gold">💰 GOLD: <span id="shop-gold">0</span></div>
+  </div>
+  <div class="packs-grid">
+    <div class="pack-card" onclick="buyPack('basic')">
+      <div class="pack-art">🎴</div>
+      <div class="pack-name">BASIC PACK</div>
+      <div class="pack-desc">3 Common–Uncommon cards. Safe bet for beginners.</div>
+      <div class="pack-price">💰 100 GOLD</div>
+      <button class="px-btn" onclick="event.stopPropagation();buyPack('basic')">BUY</button>
+    </div>
+    <div class="pack-card rare-pack" onclick="buyPack('rare')">
+      <div class="pack-art">🔮</div>
+      <div class="pack-name">RARE PACK</div>
+      <div class="pack-desc">3 cards. Guaranteed 1 Rare+. Good power spike.</div>
+      <div class="pack-price">💰 300 GOLD</div>
+      <button class="px-btn blue" onclick="event.stopPropagation();buyPack('rare')">BUY</button>
+    </div>
+    <div class="pack-card epic-pack" onclick="buyPack('epic')">
+      <div class="pack-art">💜</div>
+      <div class="pack-name">EPIC PACK</div>
+      <div class="pack-desc">4 cards. Guaranteed 1 Epic+. High risk, high reward.</div>
+      <div class="pack-price">💰 800 GOLD</div>
+      <button class="px-btn epic" onclick="event.stopPropagation();buyPack('epic')">BUY</button>
+    </div>
+    <div class="pack-card legend-pack" onclick="buyPack('legendary')">
+      <div class="pack-art">👑</div>
+      <div class="pack-name">LEGEND PACK</div>
+      <div class="pack-desc">5 cards. Guaranteed 1 Legendary+. The ultimate power.</div>
+      <div class="pack-price">💰 2000 GOLD</div>
+      <button class="px-btn" style="border-color:var(--gold);color:var(--gold)" onclick="event.stopPropagation();buyPack('legendary')">BUY</button>
+    </div>
+  </div>
+  <div style="margin-top:20px;text-align:center;font-size:6px;color:var(--text2)">Win battles to earn more gold! Boss fights reward the most.</div>
+</div>
+
+<!-- =================== CODEX =================== -->
+<div id="screen-codex" class="screen">
+  <div class="codex-header">
+    <button class="px-btn" onclick="showScreen('mainmenu')">◀ BACK</button>
+    <div class="codex-title">📖 CODEX</div>
+    <div style="font-size:6px;color:var(--text2)">Lore of the Eternal Realm</div>
+  </div>
+  <div class="codex-grid" id="codex-grid"></div>
+</div>
+
+<!-- =================== MODALS =================== -->
+
+<!-- Card Detail Modal -->
+<div class="modal-overlay" id="modal-card-detail">
+  <div class="modal-box" style="border-color:var(--detail-border,var(--gold))">
+    <button class="modal-close" onclick="closeModal('modal-card-detail')">✕</button>
+    <div class="modal-art" id="detail-art">⚔️</div>
+    <div class="modal-title" id="detail-name">Card Name</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+      <div style="font-size:6px;padding:2px 6px;background:#111;border:1px solid #333" id="detail-type">type</div>
+      <div style="font-size:6px;padding:2px 6px" id="detail-rarity-badge">rarity</div>
+      <div style="font-size:6px;color:var(--mana)">COST: <span id="detail-cost">0</span> MANA</div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">EFFECT:</div>
+      <div class="modal-desc" id="detail-desc">Description here</div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-lore" id="detail-lore">Lore here</div>
+    </div>
+    <div class="upgrade-section" id="detail-upgrade-section">
+      <div class="modal-label">UPGRADE (LVL <span id="detail-level">1</span>/<span id="detail-maxlevel">5</span>)</div>
+      <div class="upgrade-cost">Cost: 💰 <span id="detail-upgrade-cost">100</span> GOLD</div>
+      <button class="px-btn success" id="btn-upgrade-card" onclick="upgradeCard()">⬆️ UPGRADE</button>
+    </div>
+  </div>
+</div>
+
+<!-- Battle Result Modal -->
+<div class="modal-overlay" id="modal-result">
+  <div class="modal-box" style="max-width:360px">
+    <div class="result-title" id="result-title">VICTORY!</div>
+    <div class="modal-art" id="result-art">🏆</div>
+    <div class="result-rewards" id="result-rewards"></div>
+    <div class="result-btns">
+      <button class="px-btn success" id="btn-result-continue" onclick="onBattleResultContinue()">CONTINUE ▶</button>
+      <button class="px-btn" onclick="closeModal('modal-result');showScreen('mainmenu')">MAIN MENU</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pack Opening Modal -->
+<div class="modal-overlay" id="modal-pack">
+  <div class="modal-box" style="max-width:400px;text-align:center">
+    <div class="modal-title">📦 PACK OPENED!</div>
+    <div class="cards-reveal" id="pack-cards-reveal"></div>
+    <button class="px-btn success" onclick="closeModal('modal-pack')">CLAIM CARDS ✨</button>
+  </div>
+</div>
+
+<!-- Multiplayer Setup Modal -->
+<div class="modal-overlay" id="modal-multiplayer">
+  <div class="modal-box" style="max-width:320px">
+    <button class="modal-close" onclick="closeModal('modal-multiplayer')">✕</button>
+    <div class="modal-title">👥 LOCAL MULTIPLAYER</div>
+    <div class="modal-label" style="margin-top:8px">PLAYER 1 NAME:</div>
+    <input type="text" class="name-input" id="mp-p1-name" value="Player 1" maxlength="12">
+    <div class="modal-label">PLAYER 2 NAME:</div>
+    <input type="text" class="name-input" id="mp-p2-name" value="Player 2" maxlength="12">
+    <div style="margin-top:10px;font-size:6px;color:var(--text2)">Both players use their saved deck. Pass the device each turn!</div>
+    <button class="px-btn success" style="margin-top:12px;width:100%" onclick="confirmMultiplayer()">⚔️ START BATTLE</button>
+  </div>
+</div>
+
+<!-- Codex Detail Modal -->
+<div class="modal-overlay" id="modal-codex-detail">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-codex-detail')">✕</button>
+    <div class="modal-art" id="codex-detail-art">⚔️</div>
+    <div class="modal-title" id="codex-detail-name">Card Name</div>
+    <div class="modal-desc" id="codex-detail-desc"></div>
+    <div class="modal-lore" id="codex-detail-lore"></div>
+    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+      <span style="font-size:6px;color:var(--text2)">TYPE: </span><span style="font-size:6px" id="codex-detail-type"></span>
+      <span style="font-size:6px;color:var(--text2)">RARITY: </span><span style="font-size:6px" id="codex-detail-rarity"></span>
+    </div>
+  </div>
+</div>
+
+<!-- Turn Banner (player switch in multiplayer) -->
+<div class="modal-overlay" id="modal-turn-switch">
+  <div class="modal-box" style="text-align:center;max-width:280px">
+    <div class="modal-title" id="turn-switch-title">PLAYER 2'S TURN</div>
+    <div style="font-size:9px;color:var(--text2);margin:10px 0">Pass the device!</div>
+    <button class="px-btn success" style="width:100%" onclick="closeModal('modal-turn-switch');resumeMultiplayerTurn()">▶ READY</button>
+  </div>
+</div>
+
+<script src="engineGame.js"></script>
+</body>
+</html>
