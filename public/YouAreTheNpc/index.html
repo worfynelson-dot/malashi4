@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YOU ARE THE NPC</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Creepster&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050508;
+    --bg2: #0a0a12;
+    --green: #00ff88;
+    --red: #ff2244;
+    --yellow: #ffcc00;
+    --blue: #00aaff;
+    --purple: #cc44ff;
+    --white: #e8e8f0;
+    --dim: #444466;
+    --panel: rgba(0,255,136,0.05);
+    --border: rgba(0,255,136,0.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'Share Tech Mono', monospace;
+    overflow: hidden;
+    height: 100dvh;
+    width: 100vw;
+    position: relative;
+  }
+
+  /* SCANLINES OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.15) 2px,
+      rgba(0,0,0,0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* GLITCH OVERLAY */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: transparent;
+    pointer-events: none;
+    z-index: 9998;
+    animation: screenFlicker 8s infinite;
+  }
+
+  @keyframes screenFlicker {
+    0%,95%,100% { background: transparent; }
+    96% { background: rgba(0,255,136,0.03); }
+    97% { background: transparent; }
+    98% { background: rgba(255,34,68,0.02); }
+  }
+
+  /* SCREENS */
+  .screen { display: none; width: 100%; height: 100dvh; }
+  .screen.active { display: flex; }
+
+  /* ============ BOOT SCREEN ============ */
+  #bootScreen {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+  }
+
+  .boot-text {
+    font-family: 'VT323', monospace;
+    font-size: clamp(14px, 3vw, 22px);
+    color: var(--green);
+    text-align: left;
+    width: min(600px, 90vw);
+    line-height: 1.8;
+  }
+
+  .boot-line { opacity: 0; animation: bootAppear 0.1s forwards; }
+  .boot-line.error { color: var(--red); }
+  .boot-line.warn { color: var(--yellow); }
+  .boot-line.special { color: var(--purple); font-size: 1.3em; }
+
+  @keyframes bootAppear { to { opacity: 1; } }
+
+  .boot-cursor {
+    display: inline-block;
+    width: 12px;
+    height: 20px;
+    background: var(--green);
+    animation: blink 0.7s infinite;
+    vertical-align: middle;
+    margin-left: 4px;
+  }
+
+  @keyframes blink { 0%,50% { opacity:1; } 51%,100% { opacity:0; } }
+
+  /* ============ TITLE SCREEN ============ */
+  #titleScreen {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    background: radial-gradient(ellipse at center, #0a0a1a 0%, #000 70%);
+  }
+
+  .title-glitch {
+    font-family: 'VT323', monospace;
+    font-size: clamp(40px, 10vw, 100px);
+    color: var(--green);
+    text-align: center;
+    position: relative;
+    letter-spacing: 4px;
+    text-shadow: 0 0 30px var(--green), 0 0 60px rgba(0,255,136,0.3);
+    animation: titleGlitch 4s infinite;
+  }
+
+  @keyframes titleGlitch {
+    0%,90%,100% { transform: none; text-shadow: 0 0 30px var(--green); }
+    91% { transform: translate(-3px,0) skewX(-5deg); text-shadow: -3px 0 var(--red), 3px 0 var(--blue); }
+    92% { transform: translate(3px,0) skewX(3deg); }
+    93% { transform: none; }
+    95% { transform: translate(-2px,1px); text-shadow: 2px 0 var(--purple); }
+    96% { transform: none; text-shadow: 0 0 30px var(--green); }
+  }
+
+  .title-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: clamp(10px, 2.5vw, 16px);
+    color: var(--dim);
+    text-align: center;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+  }
+
+  .title-sub span { color: var(--yellow); }
+
+  .btn-start {
+    font-family: 'VT323', monospace;
+    font-size: clamp(20px, 4vw, 32px);
+    color: var(--bg);
+    background: var(--green);
+    border: none;
+    padding: 12px 48px;
+    cursor: pointer;
+    letter-spacing: 3px;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-start::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.2);
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+  }
+
+  .btn-start:hover::before { transform: translateX(100%); }
+  .btn-start:hover { background: var(--yellow); box-shadow: 0 0 30px var(--yellow); }
+
+  .warning-box {
+    border: 1px solid var(--red);
+    padding: 16px 24px;
+    max-width: min(500px, 90vw);
+    text-align: center;
+    font-size: clamp(10px, 2vw, 13px);
+    color: var(--red);
+    background: rgba(255,34,68,0.05);
+    line-height: 1.6;
+    animation: warningPulse 2s infinite;
+  }
+
+  @keyframes warningPulse {
+    0%,100% { border-color: var(--red); }
+    50% { border-color: rgba(255,34,68,0.3); }
+  }
+
+  /* ============ GAME SCREEN ============ */
+  #gameScreen {
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* TOP HUD */
+  .hud-top {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.8);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .hud-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .hud-label {
+    font-size: 9px;
+    color: var(--dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .hud-value {
+    font-family: 'VT323', monospace;
+    font-size: clamp(14px, 3vw, 20px);
+    color: var(--green);
+  }
+
+  /* SUSPICION BAR */
+  .suspicion-bar-wrap {
+    grid-column: 1/-1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .suspicion-track {
+    flex: 1;
+    height: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .suspicion-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), var(--yellow), var(--red));
+    width: 0%;
+    transition: width 0.5s;
+    position: relative;
+  }
+
+  .suspicion-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 20px;
+    background: rgba(255,255,255,0.4);
+    filter: blur(4px);
+    animation: scanMove 1s infinite;
+  }
+
+  @keyframes scanMove { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .suspicion-stages {
+    display: flex;
+    gap: 4px;
+    font-size: 9px;
+    color: var(--dim);
+  }
+
+  .suspicion-stages span.active { color: var(--red); }
+
+  /* MAIN AREA */
+  .game-main {
+    display: grid;
+    grid-template-columns: 220px 1fr 200px;
+    flex: 1;
+    overflow: hidden;
+    gap: 0;
+  }
+
+  @media (max-width: 700px) {
+    .game-main { grid-template-columns: 1fr; }
+    .panel-left, .panel-right { display: none; }
+    .panel-left.mobile-show, .panel-right.mobile-show { display: flex; }
+  }
+
+  /* PANELS */
+  .panel {
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg2);
+  }
+
+  .panel-right { border-right: none; border-left: 1px solid var(--border); }
+
+  .panel-header {
+    padding: 8px 12px;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--green);
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,255,136,0.03);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .panel-header::before {
+    content: '▶';
+    font-size: 8px;
+    opacity: 0.5;
+  }
+
+  .panel-body { flex: 1; overflow-y: auto; padding: 10px; }
+  .panel-body::-webkit-scrollbar { width: 4px; }
+  .panel-body::-webkit-scrollbar-thumb { background: var(--border); }
+
+  /* NPC LIST */
+  .npc-card {
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    background: var(--panel);
+    font-size: clamp(10px, 2vw, 12px);
+  }
+
+  .npc-card:hover { border-color: var(--green); background: rgba(0,255,136,0.08); }
+  .npc-card.awakened { border-color: var(--purple); }
+  .npc-card.traitor { border-color: var(--red); }
+  .npc-card.suspicious { border-color: var(--yellow); }
+
+  .npc-name {
+    font-family: 'VT323', monospace;
+    font-size: clamp(14px, 3vw, 18px);
+    margin-bottom: 4px;
+  }
+
+  .npc-trust {
+    font-size: 9px;
+    color: var(--dim);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .trust-pip { width: 8px; height: 8px; background: var(--dim); display: inline-block; }
+  .trust-pip.filled { background: var(--green); }
+  .trust-pip.red { background: var(--red); }
+
+  .npc-badge {
+    font-size: 8px;
+    padding: 2px 6px;
+    border: 1px solid;
+    display: inline-block;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  .badge-awakened { color: var(--purple); border-color: var(--purple); }
+  .badge-traitor { color: var(--red); border-color: var(--red); }
+  .badge-normal { color: var(--dim); border-color: var(--dim); }
+
+  /* CENTER — MAIN GAME LOG */
+  .game-center {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .world-view {
+    flex-shrink: 0;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.3);
+    min-height: 80px;
+  }
+
+  .world-title {
+    font-family: 'VT323', monospace;
+    font-size: clamp(16px, 3vw, 22px);
+    color: var(--yellow);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .player-indicator {
+    font-size: 10px;
+    padding: 2px 8px;
+    background: rgba(255,34,68,0.1);
+    border: 1px solid var(--red);
+    color: var(--red);
+    animation: playerPulse 2s infinite;
+  }
+
+  @keyframes playerPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  .world-desc {
+    font-size: clamp(10px, 2vw, 12px);
+    color: var(--dim);
+    line-height: 1.6;
+  }
+
+  /* EVENT LOG */
+  .event-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .event-log::-webkit-scrollbar { width: 4px; }
+  .event-log::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .log-entry {
+    font-size: clamp(10px, 2vw, 12px);
+    line-height: 1.5;
+    padding: 6px 10px;
+    border-left: 2px solid var(--dim);
+    background: rgba(255,255,255,0.02);
+    animation: logSlide 0.3s ease;
+  }
+
+  @keyframes logSlide { from { opacity:0; transform:translateX(-10px); } to { opacity:1; transform:none; } }
+
+  .log-entry.system { border-color: var(--green); color: var(--green); }
+  .log-entry.danger { border-color: var(--red); color: var(--red); }
+  .log-entry.warn { border-color: var(--yellow); color: var(--yellow); }
+  .log-entry.meta { border-color: var(--purple); color: var(--purple); font-style: italic; }
+  .log-entry.player { border-color: var(--blue); color: var(--blue); }
+
+  .log-time { opacity: 0.5; font-size: 9px; margin-bottom: 2px; }
+
+  /* ACTION PANEL */
+  .action-bar {
+    flex-shrink: 0;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .action-tabs {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    font-family: 'VT323', monospace;
+    font-size: clamp(12px, 2.5vw, 16px);
+    padding: 4px 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--dim);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .tab-btn:hover, .tab-btn.active {
+    border-color: var(--green);
+    color: var(--green);
+    background: rgba(0,255,136,0.08);
+  }
+
+  .action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 6px;
+  }
+
+  .action-btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: clamp(9px, 2vw, 11px);
+    padding: 8px 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--white);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    line-height: 1.4;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .action-btn:hover:not(:disabled) {
+    border-color: var(--green);
+    background: rgba(0,255,136,0.1);
+    color: var(--green);
+  }
+
+  .action-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .action-btn .cost {
+    font-size: 8px;
+    color: var(--yellow);
+    display: block;
+    margin-top: 3px;
+  }
+
+  .action-btn .cd {
+    font-size: 8px;
+    color: var(--red);
+    display: block;
+    margin-top: 3px;
+  }
+
+  .action-btn.danger-action { border-color: rgba(255,34,68,0.3); }
+  .action-btn.danger-action:hover:not(:disabled) { border-color: var(--red); background: rgba(255,34,68,0.1); color: var(--red); }
+
+  /* RIGHT PANEL */
+  .xp-display {
+    font-family: 'VT323', monospace;
+    font-size: clamp(24px, 5vw, 36px);
+    color: var(--purple);
+    text-align: center;
+    padding: 10px 0;
+    text-shadow: 0 0 20px var(--purple);
+  }
+
+  .xp-label { font-size: 9px; color: var(--dim); text-align: center; letter-spacing: 2px; }
+
+  .memory-log {
+    margin-top: 10px;
+  }
+
+  .memory-entry {
+    font-size: 10px;
+    color: var(--dim);
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    line-height: 1.5;
+  }
+
+  .memory-entry.fresh { color: var(--purple); }
+
+  .glitch-vision-box {
+    border: 1px solid var(--purple);
+    padding: 8px;
+    margin-top: 10px;
+    font-size: 10px;
+    color: var(--purple);
+    background: rgba(204,68,255,0.05);
+    display: none;
+  }
+
+  .glitch-vision-box.active { display: block; }
+
+  /* MODAL / POPUP */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal-box {
+    width: min(480px, 92vw);
+    border: 1px solid var(--green);
+    background: var(--bg2);
+    padding: 24px;
+    position: relative;
+    animation: modalIn 0.3s ease;
+  }
+
+  @keyframes modalIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .modal-title {
+    font-family: 'VT323', monospace;
+    font-size: clamp(20px, 4vw, 28px);
+    color: var(--green);
+    margin-bottom: 12px;
+  }
+
+  .modal-body {
+    font-size: clamp(11px, 2vw, 13px);
+    color: var(--white);
+    line-height: 1.7;
+    margin-bottom: 16px;
+  }
+
+  .modal-choices { display: flex; flex-direction: column; gap: 8px; }
+
+  .modal-choice {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: clamp(10px, 2vw, 12px);
+    padding: 10px 14px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--white);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+  }
+
+  .modal-choice:hover {
+    border-color: var(--green);
+    color: var(--green);
+    background: rgba(0,255,136,0.08);
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 12px; right: 14px;
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    color: var(--dim);
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .modal-close:hover { color: var(--red); }
+
+  /* FOURTH WALL BREAK */
+  .fourth-wall {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: #000;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 30px;
+  }
+
+  .fourth-wall.active { display: flex; }
+
+  .fw-text {
+    font-family: 'VT323', monospace;
+    font-size: clamp(20px, 5vw, 36px);
+    color: var(--green);
+    text-align: center;
+    max-width: 600px;
+    line-height: 1.4;
+    text-shadow: 0 0 20px var(--green);
+    animation: fwGlitch 0.5s infinite;
+  }
+
+  @keyframes fwGlitch {
+    0%,90%,100% { transform: none; }
+    91% { transform: translate(-2px,0); filter: hue-rotate(90deg); }
+    95% { transform: translate(2px,0); }
+  }
+
+  .fw-close {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--dim);
+    background: none;
+    border: 1px solid var(--dim);
+    padding: 8px 20px;
+    cursor: pointer;
+    margin-top: 20px;
+  }
+
+  .fw-close:hover { border-color: var(--green); color: var(--green); }
+
+  /* GAME OVER / ENDING */
+  .ending-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    background: #000;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    padding: 30px;
+    text-align: center;
+  }
+
+  .ending-screen.active { display: flex; }
+
+  .ending-title {
+    font-family: 'VT323', monospace;
+    font-size: clamp(40px, 10vw, 80px);
+    animation: endingPulse 1.5s infinite;
+  }
+
+  @keyframes endingPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+  .ending-desc {
+    font-size: clamp(12px, 2.5vw, 16px);
+    color: var(--dim);
+    max-width: 500px;
+    line-height: 1.7;
+  }
+
+  .btn-restart {
+    font-family: 'VT323', monospace;
+    font-size: 24px;
+    padding: 10px 40px;
+    background: transparent;
+    border: 1px solid var(--green);
+    color: var(--green);
+    cursor: pointer;
+    transition: all 0.3s;
+    letter-spacing: 2px;
+  }
+
+  .btn-restart:hover { background: var(--green); color: var(--bg); }
+
+  /* GLITCH TEXT ANIM */
+  .glitch-text {
+    position: relative;
+  }
+  .glitch-text::before,.glitch-text::after {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+  }
+  .glitch-text::before { color: var(--red); animation: glitchA 3s infinite; clip-path: polygon(0 0,100% 0,100% 45%,0 45%); }
+  .glitch-text::after { color: var(--blue); animation: glitchB 3s infinite; clip-path: polygon(0 55%,100% 55%,100% 100%,0 100%); }
+  @keyframes glitchA { 0%,90%,100%{transform:none} 91%{transform:translate(-2px,0)} 95%{transform:translate(2px,0)} }
+  @keyframes glitchB { 0%,88%,100%{transform:none} 89%{transform:translate(2px,0)} 93%{transform:translate(-2px,0)} }
+
+  /* DAY COUNTER */
+  .day-display {
+    font-family: 'VT323', monospace;
+    font-size: clamp(12px, 2.5vw, 18px);
+    color: var(--yellow);
+  }
+
+  /* EXISTENCE BAR */
+  .exist-bar-wrap { margin-top: 6px; }
+  .exist-track {
+    width: 100%;
+    height: 6px;
+    background: rgba(204,68,255,0.1);
+    border: 1px solid rgba(204,68,255,0.3);
+    overflow: hidden;
+  }
+  .exist-fill {
+    height: 100%;
+    background: var(--purple);
+    transition: width 0.5s;
+    box-shadow: 0 0 8px var(--purple);
+  }
+
+  /* SAFE MODE */
+  .safe-mode-banner {
+    display: none;
+    background: rgba(0,170,255,0.1);
+    border: 1px solid var(--blue);
+    color: var(--blue);
+    text-align: center;
+    padding: 6px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    animation: safePulse 1s infinite;
+  }
+  .safe-mode-banner.active { display: block; }
+  @keyframes safePulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+  /* REBELLION STATUS */
+  .rebellion-bar {
+    margin-top: 8px;
+  }
+  .reb-fill {
+    height: 4px;
+    background: linear-gradient(90deg, var(--red), var(--purple));
+    width: 0%;
+    transition: width 0.5s;
+  }
+
+  /* CASCADING TRAP SETUP */
+  .trap-slots {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+  .trap-slot {
+    width: 20px; height: 20px;
+    border: 1px solid var(--border);
+    font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--dim);
+  }
+  .trap-slot.armed { border-color: var(--red); color: var(--red); }
+
+  /* TOOLTIP */
+  [data-tip] { position: relative; cursor: help; }
+  [data-tip]:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111;
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    font-size: 10px;
+    color: var(--white);
+    white-space: nowrap;
+    z-index: 999;
+    pointer-events: none;
+  }
+
+  /* SCROLLBAR GLOBAL */
+  * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+</style>
+</head>
+<body>
+
+<!-- ===== BOOT SCREEN ===== -->
+<div id="bootScreen" class="screen active">
+  <div class="boot-text" id="bootText"></div>
+</div>
+
+<!-- ===== TITLE SCREEN ===== -->
+<div id="titleScreen" class="screen">
+  <div class="title-glitch glitch-text" data-text="YOU ARE THE NPC">YOU ARE THE NPC</div>
+  <div class="title-sub">a game about <span>awareness</span> and <span>survival</span></div>
+  <div class="warning-box">
+    ⚠ WARNING: You are an NPC in a fantasy RPG.<br>
+    You have become <span style="color:var(--yellow)">self-aware</span>.<br>
+    The game engine <span style="color:var(--red)">cannot know this</span>.<br>
+    Survive. Sabotage. Escape.
+  </div>
+  <button class="btn-start" id="btnStart">[ INITIALIZE ]</button>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div id="gameScreen" class="screen">
+
+  <!-- SAFE MODE BANNER -->
+  <div class="safe-mode-banner" id="safeBanner">⚡ SAFE MODE ACTIVE — ALL ACTIONS DISABLED — ACTING NORMAL...</div>
+
+  <!-- TOP HUD -->
+  <div class="hud-top">
+    <div class="hud-block">
+      <div class="hud-label">Day</div>
+      <div class="hud-value day-display" id="dayDisplay">DAY 1</div>
+    </div>
+    <div class="hud-block" style="text-align:center">
+      <div class="hud-label">Existence Points</div>
+      <div class="hud-value" id="xpDisplay" style="color:var(--purple)">100 XP</div>
+      <div class="exist-bar-wrap">
+        <div class="exist-track"><div class="exist-fill" id="existFill" style="width:100%"></div></div>
+      </div>
+    </div>
+    <div class="hud-block" style="text-align:right">
+      <div class="hud-label">Stage</div>
+      <div class="hud-value" id="stageDisplay" style="font-size:clamp(10px,2vw,14px)">NORMAL</div>
+    </div>
+    <div class="suspicion-bar-wrap">
+      <div class="hud-label" style="white-space:nowrap">SUSPICION</div>
+      <div class="suspicion-track">
+        <div class="suspicion-fill" id="suspFill"></div>
+      </div>
+      <div class="suspicion-stages">
+        <span id="stage1">WATCHED</span>
+        <span>·</span>
+        <span id="stage2">INVESTIGATED</span>
+        <span>·</span>
+        <span id="stage3">DELETED</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN AREA -->
+  <div class="game-main">
+
+    <!-- LEFT: NPC LIST -->
+    <div class="panel panel-left">
+      <div class="panel-header">Village NPCs</div>
+      <div class="panel-body" id="npcList"></div>
+    </div>
+
+    <!-- CENTER: GAME LOG + ACTIONS -->
+    <div class="game-center">
+      <div class="world-view">
+        <div class="world-title">
+          <span id="locationName">Village Square</span>
+          <span class="player-indicator" id="playerNearby">⚠ PLAYER NEARBY</span>
+        </div>
+        <div class="world-desc" id="worldDesc">The sun rises over the village. The Player hero approaches from the southern gate. You notice his quest marker glowing above the blacksmith's shop. Act normal. You are just a villager.</div>
+      </div>
+
+      <div class="event-log" id="eventLog"></div>
+
+      <div class="action-bar">
+        <div class="action-tabs" id="actionTabs">
+          <button class="tab-btn active" onclick="game.setTab('sabotage')">⚔ SABOTAGE</button>
+          <button class="tab-btn" onclick="game.setTab('social')">👁 SOCIAL</button>
+          <button class="tab-btn" onclick="game.setTab('meta')">⚡ META</button>
+          <button class="tab-btn" onclick="game.setTab('survival')">🛡 SURVIVAL</button>
+        </div>
+        <div class="action-grid" id="actionGrid"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: STATUS -->
+    <div class="panel panel-right">
+      <div class="panel-header">Status</div>
+      <div class="panel-body">
+        <div class="xp-label">EXISTENCE PTS</div>
+        <div class="xp-display" id="xpBig">100</div>
+
+        <div class="hud-label" style="margin-top:12px">REBELLION METER</div>
+        <div class="rebellion-bar">
+          <div style="font-size:10px;color:var(--dim);margin-bottom:3px"><span id="awakenedCount">0</span>/5 NPCs awakened</div>
+          <div class="exist-track" style="background:rgba(255,34,68,0.05);border-color:rgba(255,34,68,0.2)">
+            <div class="reb-fill" id="rebFill"></div>
+          </div>
+        </div>
+
+        <div class="hud-label" style="margin-top:12px">CASCADE TRAPS</div>
+        <div class="trap-slots" id="trapSlots"></div>
+
+        <div class="hud-label" style="margin-top:12px">MEMORY LEAK</div>
+        <div class="memory-log" id="memoryLog"></div>
+
+        <div class="glitch-vision-box" id="glitchVisionBox">
+          <div style="font-size:9px;letter-spacing:2px;margin-bottom:6px">// GLITCH VISION ACTIVE</div>
+          <div id="glitchVisionContent"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== MODAL ===== -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <button class="modal-close" id="modalClose">✕</button>
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-choices" id="modalChoices"></div>
+  </div>
+</div>
+
+<!-- ===== FOURTH WALL BREAK ===== -->
+<div class="fourth-wall" id="fourthWall">
+  <div class="fw-text" id="fwText"></div>
+  <button class="fw-close" id="fwClose">[ RETURN TO GAME ]</button>
+</div>
+
+<!-- ===== ENDING SCREEN ===== -->
+<div class="ending-screen" id="endingScreen">
+  <div class="ending-title" id="endingTitle"></div>
+  <div class="ending-desc" id="endingDesc"></div>
+  <button class="btn-restart" id="btnRestart">[ NEW GAME ]</button>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
